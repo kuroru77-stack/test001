@@ -1,0 +1,148 @@
+<title>회화 대본 노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: 상단 고정 버튼 줄(대본 3개 + 발음·해석·가리기 토글) → 말풍선 대본(AI 왼쪽, 나 오른쪽) → AI 프롬프트 2단계 */
+:root{
+  --paper:#f2f3f7; --card:#ffffff; --ink:#1c2340; --muted:#5b6482; --line:#d8dbe6;
+  --ai:#2d47a6; --ai-soft:#e5e9f7; --me:#2f7a54; --me-soft:#e3f2ea; --shu:#cf432c;
+  --f-kanji:"Klee One","Zen Kaku Gothic New","Hiragino Mincho ProN",serif;
+  --f-jp:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f121c; --card:#181c2b; --ink:#e6e8f2; --muted:#9aa2bf; --line:#2a3046;
+  --ai:#94a6ff; --ai-soft:#1f2642; --me:#6fd19c; --me-soft:#16302a; --shu:#ff7a62; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f121c; --card:#181c2b; --ink:#e6e8f2; --muted:#9aa2bf; --line:#2a3046;
+  --ai:#94a6ff; --ai-soft:#1f2642; --me:#6fd19c; --me-soft:#16302a; --shu:#ff7a62; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+rt{font-size:.55em;color:var(--muted);font-weight:400}
+.nofuri rt{visibility:hidden}
+.nokr .kr{display:none}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.bar{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:10px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.b{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 2px;cursor:pointer;display:grid;gap:1px;justify-items:center;min-width:0}
+.b b{font-size:.95rem}
+.b small{font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.b.sc[aria-pressed="true"]{background:var(--ai);border-color:var(--ai);color:var(--card)}
+.b.sc[aria-pressed="true"] small{color:var(--card);opacity:.85}
+.b.tg small{color:var(--ai);font-weight:600}
+.b.tg.off small{color:var(--muted);font-weight:400}
+
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:18px 56px;display:grid;gap:18px}
+.head{display:grid;gap:4px}
+.head h1{margin:0;font-size:1.25rem;text-wrap:balance}
+.head p{margin:0;color:var(--muted);font-size:.9rem}
+.roles{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem}
+.roles span{display:inline-flex;gap:6px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%}
+
+.chat{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ln{display:flex;gap:8px;align-items:flex-end;max-width:88%}
+.ln.m{margin-left:auto;flex-direction:row-reverse}
+.who{font-family:var(--f-jp);font-size:.72rem;color:var(--muted);flex:none;width:2.6rem;text-align:center;padding-bottom:6px}
+.bub{border-radius:14px;padding:8px 12px;display:grid;gap:0;min-width:0;cursor:default}
+.a .bub{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px}
+.m .bub{background:var(--me-soft);border:1px solid transparent;border-bottom-right-radius:4px}
+.jp{font-family:var(--f-jp);font-size:1.02rem;line-height:2}
+.kr{color:var(--muted);font-size:.84rem}
+.n{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hid .bub{cursor:pointer}
+.hid .jp,.hid .kr{filter:blur(7px);user-select:none}
+.hid .bub::after{content:"눌러서 보기";font-size:.72rem;color:var(--muted)}
+.hid.peek .jp,.hid.peek .kr{filter:none}
+.hid.peek .bub::after{content:""}
+.play{flex:none;border:1px solid var(--line);background:var(--card);border-radius:50%;width:30px;height:30px;display:grid;place-items:center;cursor:pointer;margin-bottom:4px}
+.play svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
+
+.steps{display:grid;gap:14px;border-top:1px solid var(--line);padding-top:18px}
+.step{display:grid;gap:8px}
+.step h2{margin:0;font-size:1rem;display:flex;gap:8px;align-items:baseline}
+.step h2 span{font-family:var(--f-kanji);color:var(--shu)}
+.step p{margin:0;color:var(--muted);font-size:.86rem}
+.step code{display:block;font-family:var(--f-jp);font-size:.85rem;background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:9.5rem;overflow:auto;user-select:all}
+.copy{justify-self:start;border:1px solid var(--ai);background:var(--ai);color:var(--card);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:.88rem}
+@media (max-width:480px){.bar{gap:4px;padding-inline:12px}.b b{font-size:.85rem}.b small{font-size:.62rem}.ln{max-width:96%}.who{width:2.2rem}}
+</style>
+
+<nav class="top" aria-label="대본과 보기 설정"><div class="bar" id="bar"></div></nav>
+<div class="wrap" id="main"></div>
+
+<script>
+const S=[{"id": 1, "t": "카페에서 오랜만에", "sub": "오랜만에 만난 일본인 친구 ユイ와 카페에서 수다", "ai": "ユイ", "tone": "반말", "sit": "カフェで、久しぶりに会った日本人の友達のユイと話す場面。あなたはユイで、私は日本語を勉強している韓国人の友達です。", "lines": [["a", "あ、いたいた！ごめん、{待|ま}った？", "어, 여기 있었네! 미안, 기다렸어?"], ["m", "ううん、{全然|ぜんぜん}。{私|わたし}も{今|いま}{来|き}たとこ。", "아니, 전혀. 나도 방금 왔어."], ["a", "よかった〜。{久|ひさ}しぶりだね！{元気|げんき}だった？", "다행이다~. 오랜만이다! 잘 지냈어?"], ["m", "うん、まあまあかな。ユイは？", "응, 그럭저럭. 유이는?"], ["a", "{私|わたし}はね、{最近|さいきん}ちょっと{忙|いそが}しくて。{仕事|しごと}がバタバタしてて。", "나는 요즘 좀 바빠서. 일이 정신없어서."], ["m", "そうなんだ。{大変|たいへん}だね。", "그렇구나. 힘들겠다."], ["a", "まあね。でも{今日|きょう}は{休|やす}みだから、ゆっくりしよ。{何|なに}{飲|の}む？", "뭐 그렇지. 근데 오늘은 쉬는 날이니까 느긋하게 있자. 뭐 마실래?"], ["m", "えーと、どうしようかな…。アイスカフェラテにしようかな。", "음, 어떡하지…. 아이스 카페라테로 할까."], ["a", "いいね、{私|わたし}もそうしよっと。あ、ここのチーズケーキ、めっちゃおいしいよ。", "좋네, 나도 그렇게 해야지. 아, 여기 치즈케이크 엄청 맛있어."], ["m", "ほんと？じゃあ、それも{頼|たの}もう。", "진짜? 그럼 그것도 시키자."], ["a", "で、{最近|さいきん}どう？{日本語|にほんご}の{勉強|べんきょう}、{続|つづ}いてる？", "그래서 요즘 어때? 일본어 공부 계속하고 있어?"], ["m", "うん、{毎日|まいにち}ちょっとずつやってるよ。{今|いま}、N3の{勉強|べんきょう}してるんだ。", "응, 매일 조금씩 하고 있어. 지금 N3 공부하고 있어."], ["a", "えー、すごいじゃん！{難|むずか}しくない？", "와, 대단하다! 안 어려워?"], ["m", "{漢字|かんじ}がね、ほんとに{難|むずか}しい。{覚|おぼ}えてもすぐ{忘|わす}れちゃう。", "한자가 진짜 어려워. 외워도 금방 까먹어."], ["a", "わかる〜。{日本人|にほんじん}でも{書|か}けない{漢字|かんじ}、いっぱいあるよ。", "알아~. 일본 사람도 못 쓰는 한자 엄청 많아."], ["m", "え、そうなの？ちょっと{安心|あんしん}した。", "어, 그래? 좀 안심했다."], ["a", "うん、スマホばっかり{使|つか}ってるからね。{読|よ}めるけど{書|か}けない、みたいな。", "응, 폰만 쓰니까. 읽을 수는 있는데 못 쓰는, 그런 느낌."], ["m", "なるほどね。", "그렇구나."], ["a", "どうやって{勉強|べんきょう}してるの？", "어떻게 공부하고 있어?"], ["m", "アニメ{見|み}たり、AIと{話|はな}したりしてる。", "애니 보거나 AI랑 대화하거나 해."], ["a", "AIと？へー、{今|いま}っぽいね！どんなアニメ{見|み}てるの？", "AI랑? 오, 요즘 스타일이네! 어떤 애니 보고 있어?"], ["m", "『あたしンち』。{家族|かぞく}の{話|はなし}で、すごく{面白|おもしろ}いよ。", "'아따맘마'. 가족 이야기라 진짜 재밌어."], ["a", "{懐|なつ}かしい！{子供|こども}のころ、よく{見|み}てた。お{母|かあ}さんがめっちゃ{面白|おもしろ}いよね。", "추억이다! 어릴 때 자주 봤어. 엄마가 엄청 웃기지."], ["m", "そうそう！お{母|かあ}さんのしゃべり{方|かた}、{真似|まね}したくなる。", "맞아 맞아! 엄마 말투 따라 하고 싶어져."], ["a", "あはは、あれは{真似|まね}しないほうがいいかも。", "하하, 그건 따라 안 하는 게 좋을지도."], ["m", "え、なんで？", "어, 왜?"], ["a", "ちょっと{言葉|ことば}が{乱暴|らんぼう}なときあるから。{友達|ともだち}{同士|どうし}ならいいけどね。", "가끔 말이 좀 거칠 때가 있어서. 친구끼리는 괜찮지만."], ["m", "そっか。{気|き}をつける。", "그렇구나. 조심할게."], ["a", "そういえば、{週末|しゅうまつ}って{何|なに}してるの？", "그러고 보니 주말엔 뭐 해?"], ["m", "{最近|さいきん}は{家|いえ}でゴロゴロしてることが{多|おお}いかな。ユイは？", "요즘은 집에서 뒹굴뒹굴할 때가 많아. 유이는?"], ["a", "{私|わたし}は{友達|ともだち}とカフェ{巡|めぐ}りしたり、たまに{映画|えいが}{見|み}に{行|い}ったり。", "나는 친구랑 카페 투어 하거나 가끔 영화 보러 가거나."], ["m", "いいなー。{最近|さいきん}なんか{面白|おもしろ}い{映画|えいが}あった？", "좋겠다~. 요즘 뭐 재밌는 영화 있었어?"], ["a", "うーん、この{前|まえ}{見|み}たアニメ{映画|えいが}がよかったよ。{泣|な}いちゃった。", "음, 저번에 본 애니 영화 좋았어. 울어 버렸어."], ["m", "え、ユイが{泣|な}くなんて{珍|めずら}しいね。", "헐, 유이가 울다니 별일이네."], ["a", "でしょ？{自分|じぶん}でもびっくりした。{今度|こんど}{一緒|いっしょ}に{行|い}こうよ。{字幕|じまく}なしで{見|み}てみたら？", "그치? 나도 놀랐어. 다음에 같이 가자. 자막 없이 봐 보면?"], ["m", "えー、{無理|むり}{無理|むり}！{絶対|ぜったい}わかんないよ。", "에이, 무리무리! 절대 못 알아들어."], ["a", "{大丈夫|だいじょうぶ}だって。わかんなかったら、あとで{説明|せつめい}してあげる。", "괜찮다니까. 모르면 나중에 설명해 줄게."], ["m", "ほんと？じゃあ、{行|い}ってみようかな。", "진짜? 그럼 가 볼까."], ["a", "よし、{決|き}まり！いつ{空|あ}いてる？", "좋아, 결정! 언제 시간 돼?"], ["m", "{来週|らいしゅう}の{土曜日|どようび}なら{大丈夫|だいじょうぶ}だよ。", "다음 주 토요일이면 괜찮아."], ["a", "オッケー。じゃあ、{時間|じかん}はまたLINEするね。", "오케이. 그럼 시간은 또 라인할게."], ["m", "うん、{楽|たの}しみにしてる！", "응, 기대하고 있을게!"], ["a", "あ、もうこんな{時間|じかん}。そろそろ{行|い}かなきゃ。", "아, 벌써 시간이 이렇게. 슬슬 가야겠다."], ["m", "{今日|きょう}はありがとね。{話|はな}せて{楽|たの}しかった。", "오늘 고마워. 얘기해서 즐거웠어."], ["a", "こちらこそ！{日本語|にほんご}、{前|まえ}よりすごく{上手|じょうず}になってたよ。", "나야말로! 일본어 전보다 엄청 늘었더라."], ["m", "ほんと？うれしい！もっと{頑張|がんば}る。", "진짜? 기뻐! 더 열심히 할게."], ["a", "じゃあ、またね！{気|き}をつけて{帰|かえ}ってね。", "그럼 또 봐! 조심히 들어가."], ["m", "うん、ユイもね。バイバイ！", "응, 유이도. 바이바이!"]]}, {"id": 2, "t": "이자카야 첫 만남", "sub": "여행 중 이자카야 옆자리 일본인 ケンタ와 처음 만나 대화", "ai": "ケンタ", "tone": "정중체", "sit": "旅行中の居酒屋で、隣の席の日本人ケンタと初めて話す場面。あなたはケンタ（日本人の会社員）で、私は韓国から旅行に来た人です。初対面なので、です・ます体の自然な話し方で話してください。", "lines": [["a", "あの、すみません。それ、{何|なに}{頼|たの}んだんですか？", "저기, 실례해요. 그거 뭐 시키셨어요?"], ["m", "あ、これですか？{焼|や}き{鳥|とり}の{盛|も}り{合|あ}わせです。", "아, 이거요? 야키토리 모둠이에요."], ["a", "おいしそうですね。{僕|ぼく}も{頼|たの}もうかな。", "맛있어 보이네요. 저도 시킬까."], ["m", "おすすめですよ。{特|とく}にこの「つくね」がおいしいです。", "추천해요. 특히 이 '츠쿠네'가 맛있어요."], ["a", "じゃあ、それにします。…あれ、もしかして{韓国|かんこく}の{方|かた}ですか？", "그럼 그걸로 할게요. …어, 혹시 한국 분이세요?"], ["m", "はい、そうです。よくわかりましたね。", "네, 맞아요. 잘 아셨네요."], ["a", "さっき{電話|でんわ}で{韓国語|かんこくご}、{話|はな}してたから。{旅行|りょこう}ですか？", "아까 전화로 한국어 하셔서요. 여행이세요?"], ["m", "はい、{一週間|いっしゅうかん}くらい{旅行|りょこう}で{来|き}てます。", "네, 일주일 정도 여행으로 왔어요."], ["a", "いいですね！{日本語|にほんご}、{上手|じょうず}ですね。", "좋네요! 일본어 잘하시네요."], ["m", "いえいえ、まだまだです。{今|いま}、{勉強中|べんきょうちゅう}なんです。", "아니에요, 아직 멀었어요. 지금 공부 중이에요."], ["a", "{謙遜|けんそん}しなくていいですよ。あ、{僕|ぼく}、ケンタっていいます。", "겸손 안 하셔도 돼요. 아, 저는 켄타라고 해요."], ["m", "〇〇です。よろしくお{願|ねが}いします。", "○○(내 이름)예요. 잘 부탁드려요."], ["a", "よろしくお{願|ねが}いします！{東京|とうきょう}は{初|はじ}めてですか？", "잘 부탁해요! 도쿄는 처음이에요?"], ["m", "いいえ、{二回目|にかいめ}です。{前|まえ}は{大阪|おおさか}に{行|い}きました。", "아뇨, 두 번째예요. 전에는 오사카에 갔어요."], ["a", "{大阪|おおさか}！どうでした？", "오사카! 어땠어요?"], ["m", "{食|た}べ{物|もの}がおいしくて、{人|ひと}がすごく{親切|しんせつ}でした。", "음식이 맛있고 사람들이 엄청 친절했어요."], ["a", "わかります。{大阪|おおさか}の{人|ひと}って、よく{話|はな}しかけてくれますよね。", "알아요. 오사카 사람들은 말을 잘 걸어 주잖아요."], ["m", "そうなんです。お{店|みせ}のおばちゃんがずっと{話|はな}してて、{面白|おもしろ}かったです。", "맞아요. 가게 아주머니가 계속 말해서 재밌었어요."], ["a", "あはは、{想像|そうぞう}できます。{今回|こんかい}はどこか{行|い}きました？", "하하, 상상돼요. 이번엔 어디 가셨어요?"], ["m", "{昨日|きのう}は{浅草|あさくさ}に{行|い}って、{今日|きょう}は{渋谷|しぶや}で{買|か}い{物|もの}しました。", "어제는 아사쿠사 가고, 오늘은 시부야에서 쇼핑했어요."], ["a", "{定番|ていばん}ですね。{何|なに}か{買|か}いました？", "정석이네요. 뭐 사셨어요?"], ["m", "{服|ふく}とか、お{菓子|かし}とか…。ちょっと{買|か}いすぎちゃいました。", "옷이랑 과자랑…. 좀 너무 많이 사 버렸어요."], ["a", "{日本|にほん}のお{菓子|かし}、{種類|しゅるい}{多|おお}いですもんね。", "일본 과자 종류 많죠."], ["m", "はい、コンビニに{行|い}くだけで{楽|たの}しいです。", "네, 편의점만 가도 즐거워요."], ["a", "{韓国|かんこく}のコンビニとは{違|ちが}います？", "한국 편의점이랑 달라요?"], ["m", "うーん、{韓国|かんこく}はお{店|みせ}の{中|なか}でラーメンが{食|た}べられるんですよ。", "음, 한국은 가게 안에서 라면을 먹을 수 있어요."], ["a", "え、そうなんですか！それいいなあ。", "헐, 그래요? 그거 좋다."], ["m", "はい、お{湯|ゆ}もあって、すぐ{食|た}べられます。", "네, 뜨거운 물도 있어서 바로 먹을 수 있어요."], ["a", "{行|い}ってみたいなあ。{実|じつ}は{韓国|かんこく}、まだ{行|い}ったことないんですよ。", "가 보고 싶다. 실은 한국 아직 안 가 봤어요."], ["m", "ぜひ{来|き}てください！ソウルなら{案内|あんない}しますよ。", "꼭 오세요! 서울이면 안내해 드릴게요."], ["a", "ほんとですか？うれしい！おすすめの{食|た}べ{物|もの}って{何|なん}ですか？", "진짜요? 기뻐요! 추천 음식은 뭐예요?"], ["m", "うーん、やっぱりサムギョプサルですね。あと、チキンも。", "음, 역시 삼겹살이요. 그리고 치킨도."], ["a", "チキン！{韓国|かんこく}のチキン、すごく{人気|にんき}ですよね。", "치킨! 한국 치킨 엄청 인기죠."], ["m", "はい、ビールと{一緒|いっしょ}に{食|た}べるのが{最高|さいこう}です。「チメク」って{言|い}います。", "네, 맥주랑 같이 먹는 게 최고예요. '치맥'이라고 해요."], ["a", "チメク！{覚|おぼ}えました。あ、{乾杯|かんぱい}しません？", "치맥! 외웠어요. 아, 건배 안 할래요?"], ["m", "いいですね！{乾杯|かんぱい}！", "좋아요! 건배!"], ["a", "{乾杯|かんぱい}！…{日本語|にほんご}、どうやって{勉強|べんきょう}してるんですか？", "건배! …일본어 어떻게 공부하세요?"], ["m", "アニメを{見|み}たり、AIと{話|はな}す{練習|れんしゅう}をしたりしてます。", "애니 보거나 AI랑 말하기 연습하거나 해요."], ["a", "へー、AIと！じゃあ、{今日|きょう}は{本物|ほんもの}の{日本人|にほんじん}と{練習|れんしゅう}ですね。", "오, AI랑! 그럼 오늘은 진짜 일본 사람이랑 연습이네요."], ["m", "そうですね。ちょっと{緊張|きんちょう}してます。", "그러네요. 좀 긴장돼요."], ["a", "{全然|ぜんぜん}{大丈夫|だいじょうぶ}ですよ。ちゃんと{通|つう}じてます。", "전혀 괜찮아요. 제대로 통해요."], ["m", "ありがとうございます。そう{言|い}ってもらえると、うれしいです。", "감사해요. 그렇게 말해 주시니 기뻐요."], ["a", "よかったら、LINE{交換|こうかん}しません？{韓国|かんこく}に{行|い}くとき、{連絡|れんらく}したいです。", "괜찮으면 라인 교환 안 할래요? 한국 갈 때 연락하고 싶어요."], ["m", "もちろんです！QRコード、{出|だ}しますね。", "물론이죠! QR코드 띄울게요."], ["a", "ありがとうございます。…はい、{追加|ついか}しました！", "고마워요. …네, 추가했어요!"], ["m", "{私|わたし}も{追加|ついか}しました。{今日|きょう}は{話|はな}しかけてくれて、ありがとうございました。", "저도 추가했어요. 오늘 말 걸어 주셔서 감사했어요."], ["a", "こちらこそ！{残|のこ}りの{旅行|りょこう}も{楽|たの}しんでくださいね。", "저야말로! 남은 여행도 즐기세요."], ["m", "はい、ありがとうございます。ケンタさんも、また{韓国|かんこく}で！", "네, 감사합니다. 켄타 씨, 한국에서 또 봐요!"]]}, {"id": 3, "t": "여행 계획 전화", "sub": "친한 친구 ミキ가 전화로 연휴 온천 여행을 제안", "ai": "ミキ", "tone": "반말", "sit": "仲のいい友達のミキから電話がかかってきて、来月の連休に一緒に旅行に行く計画を立てる場面。あなたはミキで、私は日本に住んでいる韓国人の友達です。", "lines": [["a", "もしもし？{今|いま}、{大丈夫|だいじょうぶ}？", "여보세요? 지금 괜찮아?"], ["m", "うん、{大丈夫|だいじょうぶ}だよ。どうしたの？", "응, 괜찮아. 무슨 일이야?"], ["a", "あのさ、{来月|らいげつ}の{連休|れんきゅう}、なんか{予定|よてい}ある？", "있잖아, 다음 달 연휴에 뭐 계획 있어?"], ["m", "{連休|れんきゅう}？ううん、{特|とく}にないけど。", "연휴? 아니, 딱히 없는데."], ["a", "よかった！{一緒|いっしょ}に{旅行|りょこう}{行|い}かない？", "다행이다! 같이 여행 안 갈래?"], ["m", "え、いいね！どこ{行|い}くの？", "오, 좋다! 어디 가?"], ["a", "まだ{決|き}めてないんだけど、{温泉|おんせん}とかどう？", "아직 안 정했는데, 온천 같은 거 어때?"], ["m", "{温泉|おんせん}、{最高|さいこう}！{行|い}きたい！", "온천 최고! 가고 싶어!"], ["a", "でしょ？{箱根|はこね}とか、どうかなって{思|おも}ってて。", "그치? 하코네 같은 데 어떨까 싶어서."], ["m", "{箱根|はこね}って、{東京|とうきょう}から{近|ちか}いよね？", "하코네는 도쿄에서 가깝지?"], ["a", "うん、{電車|でんしゃ}で{一時間半|いちじかんはん}くらいかな。ロマンスカーで{行|い}けば{楽|らく}だよ。", "응, 전철로 한 시간 반 정도? 로망스카로 가면 편해."], ["m", "へー、{楽|たの}しそう。{何泊|なんぱく}する？", "오, 재밌겠다. 몇 박 해?"], ["a", "{一泊二日|いっぱくふつか}でいいかなって。どう？", "1박 2일이면 될 것 같은데. 어때?"], ["m", "うん、ちょうどいいね。{予算|よさん}はどのくらい？", "응, 딱 좋네. 예산은 어느 정도?"], ["a", "{宿代|やどだい}{込|こ}みで、{一人|ひとり}{三万円|さんまんえん}くらいかな。", "숙박비 포함해서 1인 3만 엔 정도?"], ["m", "{三万|さんまん}かー。ちょっと{高|たか}いけど、まあ、たまにはいっか。", "3만이라…. 좀 비싸지만 뭐, 가끔은 괜찮겠지."], ["a", "そうそう、たまにはね！{宿|やど}は{私|わたし}が{探|さが}しとくよ。", "맞아 맞아, 가끔은! 숙소는 내가 찾아 둘게."], ["m", "ありがとう。{露天風呂|ろてんぶろ}があるところがいいな。", "고마워. 노천탕 있는 데가 좋겠다."], ["a", "もちろん！{部屋|へや}に{露天風呂|ろてんぶろ}がついてるとこ、{探|さが}してみる。", "물론! 방에 노천탕 딸린 데 찾아볼게."], ["m", "え、それめっちゃ{高|たか}くない？", "헐, 그거 엄청 비싸지 않아?"], ["a", "あ、そっか…。じゃあ、{大浴場|だいよくじょう}があるとこにしよ。", "아, 그렇네…. 그럼 대욕장 있는 데로 하자."], ["m", "うん、それで{十分|じゅうぶん}だよ。", "응, 그걸로 충분해."], ["a", "{箱根|はこね}で{何|なに}したい？", "하코네에서 뭐 하고 싶어?"], ["m", "うーん、{美術館|びじゅつかん}とか{行|い}ってみたいな。あと、おいしいもの{食|た}べたい。", "음, 미술관 같은 데 가 보고 싶어. 그리고 맛있는 거 먹고 싶어."], ["a", "いいね。{黒|くろ}たまごって{知|し}ってる？", "좋네. 검은 달걀 알아?"], ["m", "{黒|くろ}たまご？{何|なに}それ？", "검은 달걀? 그게 뭐야?"], ["a", "{温泉|おんせん}でゆでた{卵|たまご}で、{殻|から}が{真|ま}っ{黒|くろ}なの。{一個|いっこ}{食|た}べると{七年|しちねん}{長生|ながい}きするんだって。", "온천에서 삶은 달걀인데 껍질이 새까매. 하나 먹으면 7년 오래 산대."], ["m", "えー、{本当|ほんとう}？じゃあ、{三個|さんこ}{食|た}べなきゃ。", "헐, 진짜? 그럼 세 개 먹어야지."], ["a", "あはは、{食|た}べすぎ！", "하하, 너무 많이 먹어!"], ["m", "{天気|てんき}、{大丈夫|だいじょうぶ}かな？{雨|あめ}だったら、どうする？", "날씨 괜찮으려나? 비 오면 어떡해?"], ["a", "{雨|あめ}でも{温泉|おんせん}は{入|はい}れるし、{大丈夫|だいじょうぶ}でしょ。", "비 와도 온천은 들어갈 수 있으니까 괜찮겠지."], ["m", "そっか、{確|たし}かに。", "그렇네, 확실히."], ["a", "{待|ま}ち{合|あ}わせは{新宿駅|しんじゅくえき}でいい？{朝|あさ}{九時|くじ}くらいとか。", "만나는 건 신주쿠역 괜찮아? 아침 9시쯤이라든가."], ["m", "{九時|くじ}かー、ちょっと{早|はや}いね。{起|お}きられるかな…。", "9시라…. 좀 이르네. 일어날 수 있으려나…."], ["a", "{大丈夫|だいじょうぶ}、{当日|とうじつ}の{朝|あさ}、{電話|でんわ}で{起|お}こしてあげる。", "괜찮아, 당일 아침에 전화로 깨워 줄게."], ["m", "{助|たす}かる！お{願|ねが}いします。", "살았다! 부탁해요."], ["a", "じゃあ、{宿|やど}{決|き}まったらLINEで{送|おく}るね。", "그럼 숙소 정해지면 라인으로 보낼게."], ["m", "うん、ありがとう。{何|なに}か{準備|じゅんび}するものある？", "응, 고마워. 뭐 준비할 거 있어?"], ["a", "うーん、{着替|きが}えくらいかな。タオルは{宿|やど}にあると{思|おも}う。", "음, 갈아입을 옷 정도? 수건은 숙소에 있을 거야."], ["m", "オッケー。あー、なんか{今|いま}からワクワクしてきた！", "오케이. 아, 왠지 벌써부터 설렌다!"], ["a", "{私|わたし}も！じゃあ、また{連絡|れんらく}するね。", "나도! 그럼 또 연락할게."], ["m", "うん、よろしく！おやすみー。", "응, 잘 부탁해! 잘 자~."], ["a", "おやすみ！", "잘 자!"]]}];
+const store={get(k,f){try{const v=localStorage.getItem(k);return v==null?f:JSON.parse(v)}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let cur=store.get("sc.cur",0), furi=store.get("sc.furi",true), kr=store.get("sc.kr",true), hide=store.get("sc.hide","none");
+if(!S[cur])cur=0;
+const HIDE={none:"없음",m:"내 파트",a:"AI 파트"}, NEXT={none:"m",m:"a",a:"none"};
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const ruby=s=>esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>");
+const plain=s=>String(s).replace(/\{([^|}]+)\|[^}]+\}/g,"$1");
+const canSpeak="speechSynthesis" in window;
+function speak(t){if(!canSpeak)return;try{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.9;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("ja"));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>';
+
+function p1(s){return `ロールプレイをしましょう。場面：${s.sit}
+日本人が実際に使う自然な話し方で、一回に1〜2文、短く話してください。教科書っぽい言い方は避けてください。
+会話の途中では間違いを直さないでください。私が「おわり」と言ったら、私の日本語で不自然だったところを3つ、韓国語の説明つきで直してください。
+では、${s.ai}から話しかけてください。`}
+function p2(s){return `これから会話の台本を渡します。役を交代して練習したいです。
+あなたは台本の「私」のセリフを言ってください。私は「${s.ai}」のセリフを言います。
+台本の順番どおりに進めて、あなたのセリフを言ったら、私のセリフを待ってください。
+私が詰まったら、最初の2〜3語だけヒントを出してください。私のセリフが台本と少し違っても、意味が合っていればそのまま次に進んでください。
+最後に、私が間違えたところをまとめて教えてください。
+
+【台本】
+${s.lines.map(x=>(x[0]==="a"?s.ai:"私")+"："+plain(x[1])).join("\n")}
+
+最初のセリフは${s.ai}なので、私から始めます。準備ができたら「どうぞ」とだけ言ってください。`}
+
+function renderBar(){
+  document.getElementById("bar").innerHTML=
+    S.map((s,i)=>`<button type="button" class="b sc" data-sc="${i}" aria-pressed="${i===cur}"><b>${i+1}</b><small>${["카페","이자카야","전화"][i]}</small></button>`).join("")+
+    `<button type="button" class="b tg${furi?"":" off"}" data-t="furi" aria-pressed="${furi}"><b>발음</b><small>${furi?"켜짐":"꺼짐"}</small></button>`+
+    `<button type="button" class="b tg${kr?"":" off"}" data-t="kr" aria-pressed="${kr}"><b>해석</b><small>${kr?"켜짐":"꺼짐"}</small></button>`+
+    `<button type="button" class="b tg${hide==="none"?" off":""}" data-t="hide"><b>가리기</b><small>${HIDE[hide]}</small></button>`;
+  document.body.classList.toggle("nofuri",!furi);
+  document.body.classList.toggle("nokr",!kr);
+}
+function renderMain(){
+  const s=S[cur];let mi=0;
+  document.getElementById("main").innerHTML=`
+  <div class="head">
+    <h1>${esc(s.t)}</h1>
+    <p>${esc(s.sub)} · ${esc(s.tone)} · ${s.lines.length}줄 (내 대사 ${s.lines.filter(x=>x[0]==="m").length}줄)</p>
+    <div class="roles"><span><i class="dot" style="background:var(--ai)"></i>AI = ${esc(s.ai)}</span><span><i class="dot" style="background:var(--me)"></i>나</span></div>
+  </div>
+  <ol class="chat">${s.lines.map((x,i)=>{const isM=x[0]==="m";if(isM)mi++;const h=hide!=="none"&&hide===x[0];
+    return `<li class="ln ${x[0]}${h?" hid":""}"><span class="who" lang="ja">${isM?"나":esc(s.ai)}</span><div class="bub" ${h?'role="button" tabindex="0" aria-label="가린 대사 보기"':""}>${isM?`<span class="n">나 ${mi}</span>`:""}<span class="jp" lang="ja">${ruby(x[1])}</span><span class="kr">${esc(x[2])}</span></div>${canSpeak?`<button type="button" class="play" data-say="${esc(plain(x[1]))}" aria-label="듣기">${icon}</button>`:""}</li>`}).join("")}</ol>
+  <section class="steps">
+    <div class="step"><h2><span>一</span>내 파트를 외운 뒤 · AI에게 대본 없이</h2><p>AI는 대본을 모르니 말이 조금씩 달라져요. 외운 내 대사를 상황에 맞게 바꿔 쓰는 연습이에요.</p><code id="c1" lang="ja">${esc(p1(s))}</code><button type="button" class="copy" data-copy="c1">1단계 프롬프트 복사</button></div>
+    <div class="step"><h2><span>二</span>AI 파트를 외울 때 · AI에게 대본 주기</h2><p>역할을 바꿔서 AI가 "나" 대사를 하고, 내가 ${esc(s.ai)} 대사를 해요.</p><code id="c2" lang="ja">${esc(p2(s))}</code><button type="button" class="copy" data-copy="c2">2단계 프롬프트 복사</button></div>
+  </section>`;
+}
+function copyFrom(btn,el){
+  const label=btn.textContent;
+  const ok=()=>{btn.textContent="복사했어요";setTimeout(()=>btn.textContent=label,1600)};
+  const sel=()=>{const r=document.createRange();r.selectNodeContents(el);const g=getSelection();g.removeAllRanges();g.addRange(r);btn.textContent="선택됨, 길게 눌러 복사하세요"};
+  try{navigator.clipboard.writeText(el.textContent).then(ok,sel)}catch(e){sel()}
+}
+document.addEventListener("click",e=>{
+  const sc=e.target.closest("[data-sc]");if(sc){cur=+sc.dataset.sc;store.set("sc.cur",cur);renderBar();renderMain();window.scrollTo(0,0);return}
+  const t=e.target.closest("[data-t]");if(t){const k=t.dataset.t;
+    if(k==="furi"){furi=!furi;store.set("sc.furi",furi);renderBar();return}
+    if(k==="kr"){kr=!kr;store.set("sc.kr",kr);renderBar();return}
+    if(k==="hide"){hide=NEXT[hide];store.set("sc.hide",hide);renderBar();renderMain();return}}
+  const c=e.target.closest("[data-copy]");if(c){copyFrom(c,document.getElementById(c.dataset.copy));return}
+  const p=e.target.closest("[data-say]");if(p){speak(p.dataset.say);return}
+  const h=e.target.closest(".hid .bub");if(h){h.parentElement.classList.toggle("peek");return}
+});
+document.addEventListener("keydown",e=>{const h=e.target.closest&&e.target.closest(".hid .bub");if(h&&(e.key==="Enter"||e.key===" ")){e.preventDefault();h.parentElement.classList.toggle("peek")}});
+if(canSpeak)try{speechSynthesis.getVoices()}catch(e){}
+renderBar();renderMain();
+</script>
