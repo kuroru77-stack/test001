@@ -105,6 +105,9 @@ rt{font-size:.58em;color:var(--muted);font-weight:400}
 @media (max-width:760px){.scene{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:480px){.days{gap:4px;padding-inline:12px}.day b{font-size:.85rem}.day small{font-size:.62rem}}
 @media (prefers-reduced-motion:reduce){.inner{transition:none}}
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);max-width:calc(100% - 32px);background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;font-size:.86rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.speaking{border-color:var(--ai)!important;color:var(--ai)!important}
 </style>
 
 <h1 class="sr">N3 한자 카드</h1>
@@ -483,8 +486,27 @@ const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v)
 let known=new Set(store.get("n3c.known",[]));
 let view=store.get("n3c.v2","0");
 const flipped=new Set();
-const canSpeak="speechSynthesis" in window;
-function speak(t){if(!canSpeak)return;try{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.9;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("ja"));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+const canSpeak="speechSynthesis" in window&&typeof SpeechSynthesisUtterance!=="undefined";
+let JA=null;
+function pickVoice(){try{const vs=speechSynthesis.getVoices()||[];JA=vs.find(v=>/^ja(-|_|$)/i.test(v.lang))||null}catch(e){}}
+if(canSpeak){pickVoice();try{speechSynthesis.addEventListener("voiceschanged",pickVoice)}catch(e){try{speechSynthesis.onvoiceschanged=pickVoice}catch(_){}}}
+function toast(msg){let t=document.getElementById("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),4200)}
+function speak(texts,btn){
+  texts=[].concat(texts).filter(Boolean);
+  if(!canSpeak){toast("이 화면에서는 음성 읽기를 지원하지 않아요. Safari나 Chrome 브라우저로 열어 보세요.");return}
+  try{
+    if(!JA)pickVoice();
+    speechSynthesis.cancel();
+    if(speechSynthesis.paused)speechSynthesis.resume();
+    let started=false;
+    texts.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.85;if(JA)u.voice=JA;
+      u.onstart=()=>{started=true;btn&&btn.classList.add("speaking")};
+      if(i===texts.length-1)u.onend=()=>btn&&btn.classList.remove("speaking");
+      u.onerror=()=>{btn&&btn.classList.remove("speaking")};
+      speechSynthesis.speak(u)});
+    setTimeout(()=>{if(!started&&!speechSynthesis.speaking)toast(JA?"소리가 안 나면 무음 모드와 볼륨을 확인해 주세요.":"이 기기에 일본어 음성이 없는 것 같아요. 휴대폰 설정에서 일본어 음성(TTS)을 추가해 주세요.")},1500);
+  }catch(e){toast("음성 읽기를 시작하지 못했어요. 다른 브라우저로 열어 보세요.")}
+}
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const ruby=s=>esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>");
 function furi(w,k){
@@ -578,7 +600,7 @@ function renderGrid(){
       </div>
     </div>
     <div class="actions">
-      ${canSpeak?`<button type="button" class="btn" data-say="${esc(c.kana)}">${icon}단어</button><button type="button" class="btn" data-say="${esc(plain(c.exJ))}">${icon}예문</button>`:""}
+      <button type="button" class="btn" data-say="${esc(c.kana)}|${esc(plain(c.exJ))}">${icon}듣기</button>
       <button type="button" class="btn know" data-know="${c.id}" aria-pressed="${known.has(c.id)}">${known.has(c.id)?"외웠어요 ✓":"외웠어요"}</button>
     </div>
   </article>`).join("");
@@ -587,7 +609,7 @@ function renderScenes(){
   document.getElementById("scenes").innerHTML=SCENES.map((s,i)=>`
   <article class="scene">
     <div class="scene-head"><span class="no">${"一二三四五"[i]}</span><h2>${esc(s.t)}</h2><p>${esc(s.sub)} · Claude = ${esc(s.ai)} / 나 = ${esc(s.me)}</p></div>
-    <ol class="dia">${s.lines.map(l=>`<li class="line"><span class="who" lang="ja">${esc(l[0])}</span><div class="say"><span class="j" lang="ja">${ruby(l[1])}</span><span class="k">${esc(l[2])}</span></div>${canSpeak?`<button type="button" class="play" data-say="${esc(plain(l[1]))}" aria-label="듣기">${icon}</button>`:"<span></span>"}</li>`).join("")}</ol>
+    <ol class="dia">${s.lines.map(l=>`<li class="line"><span class="who" lang="ja">${esc(l[0])}</span><div class="say"><span class="j" lang="ja">${ruby(l[1])}</span><span class="k">${esc(l[2])}</span></div>${true?`<button type="button" class="play" data-say="${esc(plain(l[1]))}" aria-label="듣기">${icon}</button>`:"<span></span>"}</li>`).join("")}</ol>
     <div class="side">
       <div class="keys"><h3>오늘의 표현</h3>${s.keys.map(k=>`<div class="key"><b lang="ja">${ruby(k[0])}</b><span class="r">${esc(k[1])}</span><span class="m">${esc(k[2])}</span></div>`).join("")}</div>
       <div class="prompt"><h3>Claude 음성 대화 프롬프트</h3><code id="sp${i}" lang="ja">${esc(rolePrompt(s))}</code><button type="button" class="btn primary" data-copy="sp${i}">복사</button></div>
@@ -607,7 +629,7 @@ document.addEventListener("click",e=>{
   const fz=e.target.closest("[data-furi]");if(fz){showFuri=!showFuri;store.set("n3c.furi",showFuri);applyFuri();renderDays();return}
   const dv=e.target.closest("[data-view]");if(dv){view=dv.dataset.view;store.set("n3c.v2",view);flipped.clear();render();window.scrollTo(0,0);return}
   const cb=e.target.closest("[data-copy]");if(cb){const el=document.getElementById(cb.dataset.copy);copyFrom(cb,el.textContent,el);return}
-  const s=e.target.closest("[data-say]");if(s){speak(s.dataset.say);return}
+  const s=e.target.closest("[data-say]");if(s){speak(s.dataset.say.split("|"),s);return}
   const k=e.target.closest("[data-know]");if(k){const id=+k.dataset.know;known.has(id)?known.delete(id):known.add(id);store.set("n3c.known",[...known]);render();return}
   const f=e.target.closest(".flip");if(f)toggle(f);
 });
@@ -623,7 +645,6 @@ document.getElementById("noteCopy").onclick=e=>{
   const p=`アニメ『あたしンち』で聞いた表現です：\n${items.map(x=>"・"+x).join("\n")}\nまず、それぞれの意味と使い方を韓国語で短く説明してください。そのあと、この表現を使う家族の場面でロールプレイをしましょう。あなたはお母さん、私はみかんです。自然なタメ口で短く話して、最後に私の間違いを直してください。`;
   out.textContent=p;copyFrom(e.currentTarget,p,out);
 };
-if(canSpeak)try{speechSynthesis.getVoices()}catch(e){}
 if(!/^[0-6]$|^talk$/.test(view))view="0";
 renderScenes();
 applyFuri();

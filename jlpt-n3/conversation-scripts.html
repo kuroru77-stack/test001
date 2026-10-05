@@ -69,6 +69,9 @@ rt{font-size:.55em;color:var(--muted);font-weight:400}
 .step code{display:block;font-family:var(--f-jp);font-size:.85rem;background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:9.5rem;overflow:auto;user-select:all}
 .copy{justify-self:start;border:1px solid var(--ai);background:var(--ai);color:var(--card);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:.88rem}
 @media (max-width:480px){.bar{gap:4px;padding-inline:12px}.b b{font-size:.85rem}.b small{font-size:.62rem}.ln{max-width:96%}.who{width:2.2rem}}
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);max-width:calc(100% - 32px);background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;font-size:.86rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.speaking{border-color:var(--ai)!important;color:var(--ai)!important}
 </style>
 
 <nav class="top" aria-label="대본과 보기 설정"><div class="bar" id="bar"></div></nav>
@@ -83,8 +86,27 @@ const HIDE={none:"없음",m:"내 파트",a:"AI 파트"}, NEXT={none:"m",m:"a",a:
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const ruby=s=>esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>");
 const plain=s=>String(s).replace(/\{([^|}]+)\|[^}]+\}/g,"$1");
-const canSpeak="speechSynthesis" in window;
-function speak(t){if(!canSpeak)return;try{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.9;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("ja"));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+const canSpeak="speechSynthesis" in window&&typeof SpeechSynthesisUtterance!=="undefined";
+let JA=null;
+function pickVoice(){try{const vs=speechSynthesis.getVoices()||[];JA=vs.find(v=>/^ja(-|_|$)/i.test(v.lang))||null}catch(e){}}
+if(canSpeak){pickVoice();try{speechSynthesis.addEventListener("voiceschanged",pickVoice)}catch(e){try{speechSynthesis.onvoiceschanged=pickVoice}catch(_){}}}
+function toast(msg){let t=document.getElementById("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),4200)}
+function speak(texts,btn){
+  texts=[].concat(texts).filter(Boolean);
+  if(!canSpeak){toast("이 화면에서는 음성 읽기를 지원하지 않아요. Safari나 Chrome 브라우저로 열어 보세요.");return}
+  try{
+    if(!JA)pickVoice();
+    speechSynthesis.cancel();
+    if(speechSynthesis.paused)speechSynthesis.resume();
+    let started=false;
+    texts.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.85;if(JA)u.voice=JA;
+      u.onstart=()=>{started=true;btn&&btn.classList.add("speaking")};
+      if(i===texts.length-1)u.onend=()=>btn&&btn.classList.remove("speaking");
+      u.onerror=()=>{btn&&btn.classList.remove("speaking")};
+      speechSynthesis.speak(u)});
+    setTimeout(()=>{if(!started&&!speechSynthesis.speaking)toast(JA?"소리가 안 나면 무음 모드와 볼륨을 확인해 주세요.":"이 기기에 일본어 음성이 없는 것 같아요. 휴대폰 설정에서 일본어 음성(TTS)을 추가해 주세요.")},1500);
+  }catch(e){toast("음성 읽기를 시작하지 못했어요. 다른 브라우저로 열어 보세요.")}
+}
 const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>';
 
 function p1(s){return `ロールプレイをしましょう。場面：${s.sit}
@@ -120,7 +142,7 @@ function renderMain(){
     <div class="roles"><span><i class="dot" style="background:var(--ai)"></i>AI = ${esc(s.ai)}</span><span><i class="dot" style="background:var(--me)"></i>나</span></div>
   </div>
   <ol class="chat">${s.lines.map((x,i)=>{const isM=x[0]==="m";if(isM)mi++;const h=hide!=="none"&&hide===x[0];
-    return `<li class="ln ${x[0]}${h?" hid":""}"><span class="who" lang="ja">${isM?"나":esc(s.ai)}</span><div class="bub" ${h?'role="button" tabindex="0" aria-label="가린 대사 보기"':""}>${isM?`<span class="n">나 ${mi}</span>`:""}<span class="jp" lang="ja">${ruby(x[1])}</span><span class="kr">${esc(x[2])}</span></div>${canSpeak?`<button type="button" class="play" data-say="${esc(plain(x[1]))}" aria-label="듣기">${icon}</button>`:""}</li>`}).join("")}</ol>
+    return `<li class="ln ${x[0]}${h?" hid":""}"><span class="who" lang="ja">${isM?"나":esc(s.ai)}</span><div class="bub" ${h?'role="button" tabindex="0" aria-label="가린 대사 보기"':""}>${isM?`<span class="n">나 ${mi}</span>`:""}<span class="jp" lang="ja">${ruby(x[1])}</span><span class="kr">${esc(x[2])}</span></div>${true?`<button type="button" class="play" data-say="${esc(plain(x[1]))}" aria-label="듣기">${icon}</button>`:""}</li>`}).join("")}</ol>
   <section class="steps">
     <div class="step"><h2><span>一</span>내 파트를 외운 뒤 · AI에게 대본 없이</h2><p>AI는 대본을 모르니 말이 조금씩 달라져요. 외운 내 대사를 상황에 맞게 바꿔 쓰는 연습이에요.</p><code id="c1" lang="ja">${esc(p1(s))}</code><button type="button" class="copy" data-copy="c1">1단계 프롬프트 복사</button></div>
     <div class="step"><h2><span>二</span>AI 파트를 외울 때 · AI에게 대본 주기</h2><p>역할을 바꿔서 AI가 "나" 대사를 하고, 내가 ${esc(s.ai)} 대사를 해요.</p><code id="c2" lang="ja">${esc(p2(s))}</code><button type="button" class="copy" data-copy="c2">2단계 프롬프트 복사</button></div>
@@ -139,10 +161,9 @@ document.addEventListener("click",e=>{
     if(k==="kr"){kr=!kr;store.set("sc.kr",kr);renderBar();return}
     if(k==="hide"){hide=NEXT[hide];store.set("sc.hide",hide);renderBar();renderMain();return}}
   const c=e.target.closest("[data-copy]");if(c){copyFrom(c,document.getElementById(c.dataset.copy));return}
-  const p=e.target.closest("[data-say]");if(p){speak(p.dataset.say);return}
+  const p=e.target.closest("[data-say]");if(p){speak(p.dataset.say.split("|"),p);return}
   const h=e.target.closest(".hid .bub");if(h){h.parentElement.classList.toggle("peek");return}
 });
 document.addEventListener("keydown",e=>{const h=e.target.closest&&e.target.closest(".hid .bub");if(h&&(e.key==="Enter"||e.key===" ")){e.preventDefault();h.parentElement.classList.toggle("peek")}});
-if(canSpeak)try{speechSynthesis.getVoices()}catch(e){}
 renderBar();renderMain();
 </script>

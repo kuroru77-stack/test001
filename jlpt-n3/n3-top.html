@@ -1,0 +1,209 @@
+<title>N3 빈출 정리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: 상단 고정 분류 버튼 줄(문법·바꿔 말하기·가타카나·부사) + 발음 토글 → 카드 그리드(앞: 표현+예문 / 뒤: 뜻·바꿔 말하기·예문 뜻) */
+:root{
+  --paper:#f2f3f7; --card:#ffffff; --ink:#1c2340; --muted:#5b6482; --line:#d8dbe6;
+  --ai:#2d47a6; --ai-soft:#e5e9f7; --shu:#cf432c; --ok:#2f7a54;
+  --f-kanji:"Klee One","Zen Kaku Gothic New","Hiragino Mincho ProN",serif;
+  --f-jp:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f121c; --card:#181c2b; --ink:#e6e8f2; --muted:#9aa2bf; --line:#2a3046;
+  --ai:#94a6ff; --ai-soft:#1f2642; --shu:#ff7a62; --ok:#6fd19c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f121c; --card:#181c2b; --ink:#e6e8f2; --muted:#9aa2bf; --line:#2a3046;
+  --ai:#94a6ff; --ai-soft:#1f2642; --shu:#ff7a62; --ok:#6fd19c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+rt{font-size:.58em;color:var(--muted);font-weight:400}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.days{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:10px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.day{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 2px;cursor:pointer;display:grid;gap:1px;justify-items:center;min-width:0}
+.day b{font-variant-numeric:tabular-nums;font-size:.98rem;letter-spacing:.02em}
+.day small{font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.day[aria-pressed="true"]{background:var(--ai);border-color:var(--ai);color:var(--card)}
+.day[aria-pressed="true"] small{color:var(--card);opacity:.85}
+.day.done:not([aria-pressed="true"]) small{color:var(--ok);font-weight:600}
+.day.talk{background:var(--ai-soft)}
+
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:18px 56px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px 16px}
+.item{display:grid;gap:8px;align-content:start;min-width:0}
+.flip{perspective:1100px;cursor:pointer;border-radius:14px}
+.inner{display:grid;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.2,1)}
+.flip.on .inner{transform:rotateY(180deg)}
+.face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:15rem;padding:14px 16px;display:grid;min-width:0}
+.front{grid-template-rows:auto 1fr auto;justify-items:center;position:relative}
+.meta{justify-self:stretch;display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.kanji{font-family:var(--f-kanji);font-size:clamp(2.6rem,9vw,3.4rem);line-height:1.1;align-self:center;text-align:center;overflow-wrap:anywhere}
+.kanji rt{font-family:var(--f-jp);font-size:.3em;font-weight:500;letter-spacing:.05em;color:var(--ai)}
+.nofuri rt{visibility:hidden}
+.fex{justify-self:stretch;border-top:1px dashed var(--line);padding-top:8px;font-family:var(--f-jp);font-size:.95rem;line-height:2;text-align:center}
+.day.furi,.day.furi[aria-pressed]{background:var(--card);color:var(--ink);border-color:var(--line)}
+.day.furi[aria-pressed="true"] small{color:var(--ai);opacity:1;font-weight:600}
+.day.furi[aria-pressed="false"],.day.furi[aria-pressed="false"] small{color:var(--muted)}
+.stamp{position:absolute;right:12px;bottom:10px;width:34px;height:34px;border:2px solid var(--shu);color:var(--shu);border-radius:50%;display:grid;place-items:center;font-family:var(--f-kanji);font-size:1rem;transform:rotate(-12deg)}
+.back{transform:rotateY(180deg);align-content:start;gap:6px;border-color:var(--ai)}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.kana{font-family:var(--f-jp);font-size:1.4rem;font-weight:700;line-height:1.2}
+.kr{background:var(--ai-soft);color:var(--ai);border-radius:6px;padding:1px 8px;font-weight:600;font-size:.88rem}
+.mean{font-size:1.08rem;font-weight:600}
+.mean small{color:var(--muted);font-weight:400;font-size:.76rem;margin-left:6px}
+.ex{border-top:1px solid var(--line);padding-top:6px;display:grid}
+.ex .j{font-family:var(--f-jp);font-size:.95rem;line-height:2}
+.ex .k{color:var(--muted);font-size:.84rem}
+.rel{border-top:1px solid var(--line);padding-top:6px;display:grid;gap:3px}
+.rel h3{margin:0;font-size:.7rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.rel ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.rel li{display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline;border-left:2px solid var(--line);padding-left:8px}
+.rel .w{font-family:var(--f-jp);font-weight:700}
+.rel .r{font-family:var(--f-jp);color:var(--muted);font-size:.8rem}
+.rel .m{font-size:.84rem}
+
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:.8rem;display:inline-flex;gap:5px;align-items:center}
+.btn:hover{border-color:var(--ai)}
+.btn.primary{background:var(--ai);border-color:var(--ai);color:var(--card);padding:6px 12px;font-size:.88rem}
+.btn svg,.play svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
+.know[aria-pressed="true"]{border-color:var(--ok);color:var(--ok);font-weight:600}
+
+.cast{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+.cast b{font-family:var(--f-jp);color:var(--ink)}
+.scenes{display:grid;gap:28px}
+.scene{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px 28px;border-top:1px solid var(--line);padding-top:18px}
+.scene-head{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+.scene-head .no{font-family:var(--f-kanji);color:var(--shu);font-size:1.3rem}
+.scene-head h2{margin:0;font-size:1.15rem}
+.scene-head p{margin:0;color:var(--muted);flex-basis:100%}
+.dia{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.line{display:grid;grid-template-columns:4.2rem minmax(0,1fr) auto;gap:4px 10px;align-items:start}
+.who{font-family:var(--f-jp);font-size:.8rem;color:var(--ai);font-weight:700;padding-top:.5em}
+.say{display:grid;min-width:0}
+.say .j{font-family:var(--f-jp);font-size:1.02rem;line-height:2}
+.say .k{color:var(--muted);font-size:.84rem}
+.play{border:1px solid var(--line);background:var(--card);border-radius:50%;width:30px;height:30px;display:grid;place-items:center;cursor:pointer;margin-top:.3em}
+.side{display:grid;gap:12px;align-content:start;min-width:0}
+.side h3,.mynote h3{margin:0;font-size:.72rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.keys{display:grid;gap:6px}
+.key{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;border-left:2px solid var(--shu);padding-left:10px}
+.key b{font-family:var(--f-jp)}
+.key .r{font-size:.8rem;color:var(--ai)}
+.key .m{font-size:.85rem;color:var(--muted);flex-basis:100%}
+.prompt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.prompt h3,.prompt code{flex-basis:100%}
+.prompt code{min-width:0;font-family:var(--f-jp);font-size:.88rem;background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;user-select:all;overflow-wrap:anywhere}
+.mynote{margin-top:28px;display:grid;gap:10px;border:1px dashed var(--line);border-radius:14px;padding:16px;background:var(--card)}
+.mynote textarea{width:100%;min-height:6rem;font-family:var(--f-jp);font-size:.95rem;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);color:var(--ink);resize:vertical}
+@media (max-width:760px){.scene{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:480px){.days{gap:4px;padding-inline:12px}.day b{font-size:.85rem}.day small{font-size:.62rem}}
+@media (prefers-reduced-motion:reduce){.inner{transition:none}}
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);max-width:calc(100% - 32px);background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;font-size:.86rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.speaking{border-color:var(--ai)!important;color:var(--ai)!important}
+.kanji.g{font-family:var(--f-jp);font-weight:700;font-size:clamp(1.6rem,6vw,2rem)}
+.kanji.k{font-family:var(--f-jp);font-weight:700;font-size:clamp(1.8rem,7vw,2.3rem)}
+.para{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-size:.9rem}
+.para b{font-family:var(--f-jp);color:var(--ai)}
+.para span{color:var(--muted);font-size:.78rem}
+.lead{max-width:1120px;margin:0 auto;padding-inline:16px;padding-top:14px;color:var(--muted);font-size:.82rem}
+</style>
+<h1 class="sr">N3 빈출 정리</h1>
+<nav class="top" aria-label="분류"><div class="days" id="days"></div></nav>
+<p class="lead" id="lead"></p>
+<div class="wrap"><main class="grid" id="grid"></main></div>
+<script>
+const R=[["g", "〜ようにする", "", "~하도록 하다(노력·습관)", "", "{毎日|まいにち}{野菜|やさい}を{食|た}べるようにしてる。", "매일 채소를 먹으려고 하고 있어."], ["g", "〜ようになる", "", "~하게 되다(변화·가능)", "", "やっと{漢字|かんじ}が{読|よ}めるようになった！", "드디어 한자를 읽을 수 있게 됐어!"], ["g", "〜ことにする", "", "~하기로 하다(내 결정)", "", "{今年|ことし}はダイエットすることにした。", "올해는 다이어트하기로 했어."], ["g", "〜ことになる", "", "~하게 되다(정해짐)", "", "{来月|らいげつ}、{大阪|おおさか}に{転勤|てんきん}することになった。", "다음 달에 오사카로 전근 가게 됐어."], ["g", "〜ばかり", "", "~만(하다)", "", "{弟|おとうと}、ゲームばかりしてる。", "동생은 게임만 해."], ["g", "〜たばかり", "", "막 ~했다", "", "{日本|にほん}に{来|き}たばかりなんです。", "일본에 막 왔어요."], ["g", "〜るところ", "", "막 ~하려던 참", "", "{今|いま}、{出|で}るところ！", "지금 막 나가려던 참이야!"], ["g", "〜ているところ", "", "한창 ~하는 중", "", "{今|いま}{考|かんが}えてるところだから、ちょっと{待|ま}って。", "지금 생각하는 중이니까 잠깐만."], ["g", "〜たところ", "", "막 ~한 참", "", "{今|いま}{帰|かえ}ってきたところ。", "지금 막 돌아왔어."], ["g", "〜らしい", "", "~라고 한다, ~인 것 같다", "", "あの{店|みせ}、すごくおいしいらしいよ。", "그 가게 엄청 맛있대."], ["g", "名詞+らしい", "", "~답다", "", "{今日|きょう}は{春|はる}らしい{天気|てんき}だね。", "오늘은 봄다운 날씨네."], ["g", "〜みたい", "", "~인 것 같다(구어)", "", "{雨|あめ}、やんだみたい。", "비 그친 것 같아."], ["g", "〜そうだ(전문)", "", "~라고 한다", "", "{明日|あした}は{雪|ゆき}が{降|ふ}るそうです。", "내일은 눈이 온대요."], ["g", "〜そう(양태)", "", "~해 보인다", "", "このケーキ、おいしそう！", "이 케이크 맛있겠다!"], ["g", "〜はず", "", "(당연히) ~일 것이다", "", "あいつなら、もう{着|つ}いてるはずだよ。", "걔라면 벌써 도착했을 거야."], ["g", "〜はずがない", "", "~일 리가 없다", "", "そんなはずないよ！", "그럴 리가 없어!"], ["g", "〜わけだ", "", "~인 게 당연하다, 그래서 ~구나", "", "{十年|じゅうねん}も{住|す}んでたんだ。{日本語|にほんご}が{上手|じょうず}なわけだね。", "10년이나 살았구나. 일본어 잘하는 게 당연하네."], ["g", "〜わけがない", "", "~일 리가 없다", "", "{一日|いちにち}で{覚|おぼ}えられるわけがない。", "하루 만에 외울 수 있을 리가 없어."], ["g", "〜わけではない", "", "(꼭) ~인 것은 아니다", "", "{嫌|きら}いなわけじゃないけど、ちょっと{苦手|にがて}。", "싫어하는 건 아니지만 좀 별로야."], ["g", "〜ばいい", "", "~하면 된다", "", "どうすればいいと{思|おも}う？", "어떻게 하면 될 것 같아?"], ["g", "〜たらどう？", "", "~하는 게 어때?", "", "{先生|せんせい}に{聞|き}いてみたらどう？", "선생님한테 물어보는 게 어때?"], ["g", "〜ほうがいい", "", "~하는 편이 좋다", "", "{今日|きょう}は{早|はや}く{寝|ね}たほうがいいよ。", "오늘은 일찍 자는 게 좋아."], ["g", "〜なきゃ", "", "~해야 해(〜なければ의 구어)", "", "やばい、もう{帰|かえ}らなきゃ。", "큰일이다, 이제 가야 해."], ["g", "〜なくてもいい", "", "~하지 않아도 된다", "", "{無理|むり}して{来|こ}なくてもいいよ。", "무리해서 안 와도 돼."], ["g", "〜てもいい？", "", "~해도 돼?", "", "ここ、{座|すわ}ってもいい？", "여기 앉아도 돼?"], ["g", "〜ちゃう(てしまう)", "", "~해 버리다", "", "スマホ、{落|お}としちゃった。", "폰 떨어뜨려 버렸어."], ["g", "〜とく(ておく)", "", "~해 두다", "", "ビール{冷|ひ}やしとくね。", "맥주 시원하게 해 둘게."], ["g", "〜てみる", "", "~해 보다", "", "{一回|いっかい}{食|た}べてみて！", "한번 먹어 봐!"], ["g", "〜てくる", "", "~해지다(점점)", "", "だんだん{寒|さむ}くなってきたね。", "점점 추워지네."], ["g", "〜ていく", "", "~해 가다", "", "これから{子供|こども}の{数|かず}は{減|へ}っていくだろう。", "앞으로 아이 수는 줄어 갈 것이다."], ["g", "〜てもらう", "", "(남이) ~해 주다(받다)", "", "{友達|ともだち}に{手伝|てつだ}ってもらった。", "친구가 도와줬어."], ["g", "〜させてください", "", "~하게 해 주세요", "", "ちょっと{考|かんが}えさせてください。", "좀 생각해 볼게요."], ["g", "〜させられる", "", "(억지로) ~하게 되다", "", "{母|はは}に{部屋|へや}の{掃除|そうじ}をさせられた。", "엄마 때문에 억지로 방 청소를 했어."], ["g", "〜られる(수동)", "", "~당하다", "", "{電車|でんしゃ}で{足|あし}を{踏|ふ}まれた。", "전철에서 발을 밟혔어."], ["g", "〜のに", "", "~인데(도)", "", "{頑張|がんば}ったのに、{落|お}ちちゃった。", "열심히 했는데 떨어져 버렸어."], ["g", "〜ために", "", "~하기 위해", "", "{留学|りゅうがく}するために、お{金|かね}{貯|た}めてる。", "유학 가려고 돈 모으고 있어."], ["g", "〜ように(목적)", "", "~하도록", "", "{忘|わす}れないように、メモしとこう。", "안 잊어버리게 메모해 두자."], ["g", "〜ても", "", "~해도", "", "{雨|あめ}が{降|ふ}っても{行|い}くよ。", "비가 와도 갈 거야."], ["g", "〜たら", "", "~하면, ~했더니", "", "{着|つ}いたら{連絡|れんらく}してね。", "도착하면 연락해."], ["g", "〜なら", "", "~라면, ~할 거면", "", "{東京|とうきょう}に{行|い}くなら、ここおすすめ。", "도쿄 갈 거면 여기 추천해."], ["g", "〜ば〜ほど", "", "~하면 할수록", "", "{練習|れんしゅう}すればするほど{上手|じょうず}になるよ。", "연습하면 할수록 늘어."], ["g", "〜うちに", "", "~할 때(동안)에", "", "{熱|あつ}いうちに{食|た}べて！", "뜨거울 때 먹어!"], ["g", "〜間に", "", "~하는 동안에", "", "{寝|ね}てる{間|あいだ}に{雪|ゆき}が{降|ふ}ったみたい。", "자는 동안에 눈이 왔나 봐."], ["g", "〜までに", "", "~까지(기한)", "", "{金曜日|きんようび}までに{出|だ}してね。", "금요일까지 내 줘."], ["g", "〜ながら", "", "~하면서", "", "{音楽|おんがく}{聞|き}きながら{勉強|べんきょう}してる。", "음악 들으면서 공부하고 있어."], ["g", "〜たまま", "", "~한 채로", "", "{電気|でんき}つけたまま{寝|ね}ちゃった。", "불 켜 놓은 채로 자 버렸어."], ["g", "〜すぎる", "", "너무 ~하다", "", "{昨日|きのう}、{飲|の}みすぎた…。", "어제 너무 많이 마셨어…."], ["g", "〜やすい / 〜にくい", "", "~하기 쉽다 / 어렵다", "", "このペン、{書|か}きやすいね。", "이 펜 쓰기 편하다."], ["g", "〜について", "", "~에 대해", "", "{日本|にほん}の{文化|ぶんか}について{調|しら}べてる。", "일본 문화에 대해 찾아보고 있어."], ["g", "〜によって", "", "~에 따라", "", "{人|ひと}によって{考|かんが}え{方|かた}が{違|ちが}うよね。", "사람마다 생각이 다르지."], ["g", "〜にとって", "", "~에게(있어)", "", "{私|わたし}にとって、{家族|かぞく}が{一番|いちばん}{大事|だいじ}。", "나한테는 가족이 제일 중요해."], ["g", "〜として", "", "~로서", "", "{通訳|つうやく}として{働|はたら}いてるんだ。", "통역사로 일하고 있어."], ["g", "〜とおり(に)", "", "~대로", "", "{言|い}われたとおりにやったよ。", "들은 대로 했어."], ["g", "〜っぽい", "", "~스럽다, 자꾸 ~하다", "", "{最近|さいきん}、{忘|わす}れっぽくて…。", "요즘 자꾸 깜빡해서…."], ["g", "〜かもしれない", "", "~일지도 모른다", "", "{明日|あした}、ちょっと{遅|おく}れるかもしれない。", "내일 좀 늦을지도 몰라."], ["g", "〜に違いない", "", "~임에 틀림없다", "", "この{字|じ}は{兄|あに}が{書|か}いたに{違|ちが}いない。", "이 글씨는 형이 쓴 게 틀림없어."], ["g", "〜ことがある", "", "~할 때가 있다", "", "たまに{朝|あさ}ご{飯|はん}{食|た}べないことがある。", "가끔 아침을 안 먹을 때가 있어."], ["g", "〜って(전언)", "", "~래, ~대", "", "{田中|たなか}さん、{今日|きょう}{来|こ}ないって。", "다나카 씨 오늘 안 온대."], ["g", "〜しか〜ない", "", "~밖에 없다", "", "お{金|かね}、{千円|せんえん}しかない…。", "돈이 천 엔밖에 없어…."], ["g", "〜だけでなく", "", "~뿐만 아니라", "", "{英語|えいご}だけでなく、{中国語|ちゅうごくご}も{話|はな}せるんだって。", "영어뿐만 아니라 중국어도 할 줄 안대."], ["g", "〜おかげで", "", "~덕분에", "", "{先輩|せんぱい}のおかげで{合格|ごうかく}できた。", "선배 덕분에 합격했어."], ["g", "〜せいで", "", "~탓에", "", "{雨|あめ}のせいで{試合|しあい}が{中止|ちゅうし}になった。", "비 때문에 시합이 취소됐어."], ["g", "〜わりに", "", "~에 비해, ~치고는", "", "この{店|みせ}、{安|やす}いわりにおいしいね。", "이 가게 싼 것치고 맛있네."], ["g", "〜たびに", "", "~할 때마다", "", "この{曲|きょく}{聞|き}くたびに{思|おも}い{出|だ}す。", "이 노래 들을 때마다 생각나."], ["g", "〜ずに", "", "~하지 않고", "", "{朝|あさ}ご{飯|はん}{食|た}べずに{出|で}てきちゃった。", "아침 안 먹고 나와 버렸어."], ["g", "〜ばよかった", "", "~했으면 좋았을 텐데", "", "もっと{早|はや}く{言|い}えばよかった。", "더 빨리 말할걸."], ["p", "たまに", "たまに", "가끔", "ときどき", "たまに{外|そと}でご{飯|はん}{食|た}べる。", "가끔 밖에서 밥 먹어."], ["p", "不安", "ふあん", "불안함", "心配", "{明日|あした}の{面接|めんせつ}、ちょっと{不安|ふあん}なんだ。", "내일 면접 좀 불안해."], ["p", "現在", "げんざい", "현재", "今", "{現在|げんざい}、{東京|とうきょう}に{住|す}んでいます。", "현재 도쿄에 살고 있어요."], ["p", "用意する", "よういする", "준비하다", "準備する", "{飲|の}み{物|もの}は{私|わたし}が{用意|ようい}するね。", "음료는 내가 준비할게."], ["p", "回復する", "かいふくする", "회복하다", "よくなる", "{熱|ねつ}もだいぶ{回復|かいふく}したよ。", "열도 꽤 내렸어."], ["p", "偶然", "ぐうぜん", "우연히", "たまたま", "{駅|えき}で{偶然|ぐうぜん}{先生|せんせい}に{会|あ}った。", "역에서 우연히 선생님을 만났어."], ["p", "誤り", "あやまり", "잘못, 틀림", "間違い", "{名前|なまえ}に{誤|あやま}りがありました。", "이름에 틀린 데가 있었어요."], ["p", "ほぼ", "ほぼ", "거의", "だいたい", "{宿題|しゅくだい}、ほぼ{終|お}わった。", "숙제 거의 끝났어."], ["p", "至急", "しきゅう", "급히", "できるだけ早く", "{至急|しきゅう}{連絡|れんらく}ください。", "급히 연락 주세요."], ["p", "共通点", "きょうつうてん", "공통점", "同じところ", "{私|わたし}たち、{共通点|きょうつうてん}{多|おお}いよね。", "우리 공통점 많지."], ["p", "不足する", "ふそくする", "부족하다", "足りない", "{最近|さいきん}、{寝|ね}{不足|ぶそく}なんだよね。", "요즘 잠이 부족해."], ["p", "担当", "たんとう", "담당", "係", "この{件|けん}の{担当|たんとう}は{誰|だれ}ですか？", "이 건 담당은 누구예요?"], ["p", "案外", "あんがい", "의외로", "思ったより", "{案外|あんがい}{簡単|かんたん}だったね。", "생각보다 쉬웠네."], ["p", "一斉に", "いっせいに", "일제히", "みんな同時に", "{合図|あいず}で{一斉|いっせい}に{走|はし}り{出|だ}した。", "신호에 맞춰 일제히 달리기 시작했어."], ["p", "翌日", "よくじつ", "다음 날", "次の日", "{旅行|りょこう}の{翌日|よくじつ}は、ずっと{寝|ね}てた。", "여행 다음 날은 계속 잤어."], ["p", "延期する", "えんきする", "연기하다", "日にちを後にする", "{雨|あめ}で{運動会|うんどうかい}が{延期|えんき}になった。", "비 때문에 운동회가 연기됐어."], ["p", "中止", "ちゅうし", "중지, 취소", "やめること", "{台風|たいふう}でライブが{中止|ちゅうし}になった…。", "태풍 때문에 라이브가 취소됐어…."], ["p", "楽", "らく", "편함", "大変じゃない", "この{仕事|しごと}、{思|おも}ったより{楽|らく}だよ。", "이 일 생각보다 편해."], ["p", "そっくり", "そっくり", "꼭 닮음", "よく似ている", "お{母|かあ}さんにそっくりだね！", "엄마랑 똑 닮았네!"], ["p", "確認する", "かくにんする", "확인하다", "確かめる", "もう{一回|いっかい}{確認|かくにん}してみるね。", "한 번 더 확인해 볼게."], ["p", "日中", "にっちゅう", "낮 동안", "昼間", "{日中|にっちゅう}はまだ{暑|あつ}いね。", "낮에는 아직 덥네."], ["p", "取り消す", "とりけす", "취소하다", "キャンセルする", "{予約|よやく}、{取|と}り{消|け}してもらえますか？", "예약 취소해 주실 수 있어요?"], ["p", "夜中", "よなか", "한밤중", "夜遅く", "{夜中|よなか}にラーメン{食|た}べちゃった。", "한밤중에 라멘 먹어 버렸어."], ["p", "がっかりする", "がっかりする", "실망하다", "残念に思う", "{楽|たの}しみにしてたのに、がっかり。", "기대했는데 실망이야."], ["p", "留守", "るす", "부재중", "家にいない", "{今|いま}、{父|ちち}は{留守|るす}です。", "지금 아버지는 안 계세요."], ["p", "職業", "しょくぎょう", "직업", "仕事", "ご{職業|しょくぎょう}は？", "직업이 어떻게 되세요?"], ["p", "学習する", "がくしゅうする", "학습하다", "勉強する", "{毎日|まいにち}{少|すこ}しずつ{学習|がくしゅう}しています。", "매일 조금씩 공부하고 있어요."], ["p", "きつい", "きつい", "꽉 끼다, 힘들다", "小さすぎる・大変", "このズボン、ちょっときつい。", "이 바지 좀 꽉 껴."], ["p", "ぶつかる", "ぶつかる", "부딪치다", "当たる", "{自転車|じてんしゃ}とぶつかりそうになった！", "자전거랑 부딪칠 뻔했어!"], ["p", "怒鳴る", "どなる", "호통치다", "大きい声で怒る", "{隣|となり}のおじさんに{怒鳴|どな}られた。", "옆집 아저씨한테 호통을 들었어."], ["p", "訪ねる", "たずねる", "방문하다", "会いに行く", "{週末|しゅうまつ}、{祖母|そぼ}を{訪|たず}ねるつもり。", "주말에 할머니 댁에 가려고."], ["p", "完成する", "かんせいする", "완성되다", "できあがる", "やっと{作品|さくひん}が{完成|かんせい}した！", "드디어 작품이 완성됐어!"], ["p", "暮らす", "くらす", "살다, 지내다", "生活する", "{田舎|いなか}でのんびり{暮|く}らしたいな。", "시골에서 느긋하게 살고 싶다."], ["p", "注目する", "ちゅうもくする", "주목하다", "よく見る・関心を持つ", "みんなが{彼|かれ}のプレーに{注目|ちゅうもく}してる。", "다들 그의 플레이에 주목하고 있어."], ["p", "改善する", "かいぜんする", "개선하다", "よくする", "{生活|せいかつ}リズムを{改善|かいぜん}したい。", "생활 리듬을 고치고 싶어."], ["p", "しまう", "しまう", "넣어 두다, 치우다", "片付ける", "{使|つか}ったら、ちゃんとしまってね。", "쓰고 나면 제대로 넣어 둬."], ["p", "ぐっすり", "ぐっすり", "푹(자다)", "よく(眠る)", "{昨日|きのう}はぐっすり{眠|ねむ}れた。", "어제는 푹 잤어."], ["p", "素早い", "すばやい", "재빠르다", "速い", "{猫|ねこ}が{素早|すばや}く{逃|に}げた。", "고양이가 재빨리 도망갔어."], ["p", "苦手", "にがて", "잘 못함", "上手じゃない・好きじゃない", "{人前|ひとまえ}で{話|はな}すのが{苦手|にがて}で…。", "사람들 앞에서 말하는 게 서툴러서…."], ["k", "キャンセル", "", "취소", "cancel", "{急用|きゅうよう}でキャンセルしちゃった。", "급한 일이 생겨서 취소해 버렸어."], ["k", "スケジュール", "", "일정", "schedule", "{来週|らいしゅう}のスケジュール、どう？", "다음 주 일정 어때?"], ["k", "アドバイス", "", "조언", "advice", "{何|なに}かアドバイスちょうだい。", "뭐 조언 좀 해 줘."], ["k", "チャンス", "", "기회", "chance", "これ、{最後|さいご}のチャンスかも。", "이거 마지막 기회일지도."], ["k", "イメージ", "", "이미지, 인상", "image", "{思|おも}ってたイメージと{違|ちが}った。", "생각했던 이미지랑 달랐어."], ["k", "ストレス", "", "스트레스", "stress", "{最近|さいきん}、ストレスたまってる…。", "요즘 스트레스 쌓였어…."], ["k", "ミス", "", "실수", "miss", "また{同|おな}じミスしちゃった。", "또 같은 실수를 해 버렸어."], ["k", "ルール", "", "규칙", "rule", "ゲームのルール、{教|おし}えて。", "게임 규칙 알려 줘."], ["k", "アイデア", "", "아이디어", "idea", "それ、いいアイデアだね！", "그거 좋은 아이디어다!"], ["k", "エネルギー", "", "에너지", "energy", "{朝|あさ}ご{飯|はん}{食|た}べないと、エネルギー{出|で}ないよ。", "아침 안 먹으면 힘이 안 나."], ["k", "コミュニケーション", "", "소통", "communication", "コミュニケーションって{大事|だいじ}だよね。", "소통은 중요하지."], ["k", "サービス", "", "서비스, 덤", "service", "これ、サービスです。", "이건 서비스예요."], ["k", "スタッフ", "", "직원, 스태프", "staff", "スタッフの{人|ひと}に{聞|き}いてみよう。", "직원한테 물어보자."], ["k", "タイプ", "", "타입, 유형", "type", "{私|わたし}、{朝型|あさがた}のタイプなんだ。", "나 아침형 타입이야."], ["k", "チェック", "", "확인, 체크", "check", "{出|で}かける{前|まえ}に{天気|てんき}チェックしとこ。", "나가기 전에 날씨 체크해 두자."], ["k", "デザイン", "", "디자인", "design", "このカバン、デザインかわいいね。", "이 가방 디자인 귀엽다."], ["k", "トラブル", "", "문제, 말썽", "trouble", "{旅行中|りょこうちゅう}にトラブルがあってさ。", "여행 중에 문제가 생겨서 말이야."], ["k", "バランス", "", "균형", "balance", "{栄養|えいよう}のバランス、{考|かんが}えなきゃ。", "영양 균형 생각해야지."], ["k", "プラン", "", "계획", "plan", "{週末|しゅうまつ}のプラン、{決|き}めた？", "주말 계획 정했어?"], ["k", "ポイント", "", "요점, 포인트", "point", "ポイントは{三|みっ}つあります。", "요점은 세 가지예요."], ["k", "マナー", "", "매너", "manners", "{電車|でんしゃ}の{中|なか}で{電話|でんわ}はマナー{違反|いはん}だよ。", "전철 안에서 통화는 매너 위반이야."], ["k", "メンバー", "", "멤버", "member", "{今日|きょう}のメンバー、{誰|だれ}？", "오늘 멤버 누구야?"], ["k", "レシピ", "", "레시피", "recipe", "このレシピ、{簡単|かんたん}でおいしいよ。", "이 레시피 쉽고 맛있어."], ["k", "ラッシュ", "", "러시아워", "rush", "{朝|あさ}のラッシュ、ほんと{無理|むり}。", "아침 출근길 진짜 힘들어."], ["k", "リサイクル", "", "재활용", "recycle", "ペットボトルはリサイクルに{出|だ}してね。", "페트병은 재활용으로 내놔."], ["k", "オーバー", "", "초과, 과장", "over", "{予算|よさん}オーバーしちゃった。", "예산 초과해 버렸어."], ["k", "カロリー", "", "칼로리", "calorie", "これ、カロリー{高|たか}そう…。", "이거 칼로리 높아 보여…."], ["k", "レンタル", "", "대여", "rental", "{自転車|じてんしゃ}、レンタルしようか。", "자전거 빌릴까?"], ["k", "セール", "", "세일", "sale", "{今|いま}セール{中|ちゅう}だって！", "지금 세일 중이래!"], ["k", "ベテラン", "", "베테랑", "veteran", "あの{人|ひと}、この{道|みち}{三十年|さんじゅうねん}のベテランだよ。", "저 사람 이 분야 30년 베테랑이야."], ["a", "しっかり", "しっかり", "제대로, 단단히", "", "しっかり{休|やす}んでね。", "푹 쉬어."], ["a", "はっきり", "はっきり", "분명히, 확실히", "", "はっきり{言|い}ってよ。", "분명하게 말해."], ["a", "すっかり", "すっかり", "완전히", "", "すっかり{忘|わす}れてた！", "완전히 잊고 있었어!"], ["a", "ずっと", "ずっと", "계속, 훨씬", "", "ずっと{会|あ}いたかったよ。", "계속 보고 싶었어."], ["a", "やっと", "やっと", "겨우, 드디어", "", "やっと{終|お}わった〜！", "드디어 끝났다~!"], ["a", "ついに", "ついに", "마침내", "", "ついに{新作|しんさく}が{出|で}たね！", "마침내 신작이 나왔네!"], ["a", "なかなか", "なかなか", "좀처럼, 꽤", "", "バスがなかなか{来|こ}ない。", "버스가 좀처럼 안 와."], ["a", "とうとう", "とうとう", "결국", "", "とうとう{雨|あめ}が{降|ふ}ってきた。", "결국 비가 오기 시작했어."], ["a", "そろそろ", "そろそろ", "슬슬", "", "そろそろ{帰|かえ}ろうか。", "슬슬 갈까?"], ["a", "さっさと", "さっさと", "후딱, 빨리빨리", "", "さっさと{終|お}わらせよう。", "후딱 끝내자."], ["a", "のんびり", "のんびり", "느긋하게", "", "{休|やす}みの{日|ひ}はのんびりしたい。", "쉬는 날엔 느긋하게 있고 싶어."], ["a", "わざわざ", "わざわざ", "일부러", "", "わざわざ{来|き}てくれてありがとう。", "일부러 와 줘서 고마워."], ["a", "うっかり", "うっかり", "깜빡", "", "うっかり{寝過|ねす}ごしちゃった。", "깜빡 늦잠 자 버렸어."], ["a", "せっかく", "せっかく", "모처럼", "", "せっかく{来|き}たんだから、{写真|しゃしん}{撮|と}ろう。", "모처럼 왔으니까 사진 찍자."], ["a", "ぎりぎり", "ぎりぎり", "아슬아슬하게", "", "ぎりぎり{間|ま}に{合|あ}った！", "아슬아슬하게 시간 맞췄어!"], ["a", "こっそり", "こっそり", "몰래", "", "こっそりお{菓子|かし}{食|た}べてたでしょ。", "몰래 과자 먹고 있었지?"], ["a", "たっぷり", "たっぷり", "듬뿍, 충분히", "", "{時間|じかん}はたっぷりあるよ。", "시간은 넉넉해."], ["a", "ぴったり", "ぴったり", "딱 맞게", "", "このサイズ、ぴったり！", "이 사이즈 딱 맞아!"], ["a", "ふらふら", "ふらふら", "비틀비틀", "", "{熱|ねつ}があって、ふらふらする。", "열이 있어서 어질어질해."], ["a", "いらいら", "いらいら", "짜증, 안절부절", "", "{待|ま}たされて、いらいらしてきた。", "기다리다 보니 짜증 나기 시작했어."], ["a", "どきどき", "どきどき", "두근두근", "", "{発表|はっぴょう}の{前|まえ}って、どきどきするよね。", "발표 전에는 두근두근하지."], ["a", "わくわく", "わくわく", "설렘", "", "{明日|あした}の{旅行|りょこう}、わくわくする！", "내일 여행 설렌다!"], ["a", "にこにこ", "にこにこ", "싱글벙글", "", "{赤|あか}ちゃんがにこにこしてる。", "아기가 싱글벙글 웃고 있어."], ["a", "ぺらぺら", "ぺらぺら", "술술(유창하게)", "", "{英語|えいご}ぺらぺらなんだね！", "영어 술술 하는구나!"], ["a", "ばらばら", "ばらばら", "뿔뿔이, 제각각", "", "みんなの{意見|いけん}がばらばらだ。", "다들 의견이 제각각이야."], ["a", "ぐちゃぐちゃ", "ぐちゃぐちゃ", "엉망진창", "", "{部屋|へや}がぐちゃぐちゃ…。", "방이 엉망진창이야…."], ["a", "たまたま", "たまたま", "우연히", "", "たまたま{近|ちか}くにいたんだ。", "우연히 근처에 있었어."], ["a", "まさか", "まさか", "설마", "", "まさか、{本当|ほんとう}に{来|く}るとは{思|おも}わなかった。", "설마 진짜 올 줄은 몰랐어."], ["a", "どうせ", "どうせ", "어차피", "", "どうせ{間|ま}に{合|あ}わないよ。", "어차피 시간 안에 못 가."], ["a", "とりあえず", "とりあえず", "일단, 우선", "", "とりあえず、ビールで！", "일단 맥주로!"]];
+const SEC=[["g","문법","문형"],["p","유의어","바꿔 말하기"],["k","가타카나",""],["a","부사","의태어"]];
+const NOTE={g:"N3 문법 문제(문장의 문법)에 자주 나오는 문형이에요. 앞면 예문을 보고 뜻을 떠올린 뒤 뒤집으세요.",p:"N3 어휘 문제 4번(바꿔 말하기)처럼 같은 뜻의 쉬운 말과 짝지었어요. 뒷면 ≈ 표시가 바꿔 쓸 수 있는 말이에요.",k:"N3 어휘 문제에 자주 섞여 나오는 가타카나어예요.",a:"N3 어휘 문제 3번(문맥)에 자주 나오는 부사와 의태어예요."};
+const C=R.map((r,i)=>({id:i+1,s:r[0],w:r[1],kana:r[2],mean:r[3],extra:r[4],exJ:r[5],exK:r[6]}));
+const store={get(k,f){try{const v=localStorage.getItem(k);return v==null?f:JSON.parse(v)}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let known=new Set(store.get("top.known",[])),view=store.get("top.v","g"),showFuri=store.get("top.furi",true);
+if(!SEC.some(x=>x[0]===view))view="g";
+const flipped=new Set();
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const ruby=s=>esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>");
+const plain=s=>String(s).replace(/\{([^|}]+)\|[^}]+\}/g,"$1");
+function furi(w,k){
+  const segs=w.match(/[\u3400-\u9fff々〆ヶ]+|[^\u3400-\u9fff々〆ヶ]+/g)||[w];
+  if(segs.length===1&&/[\u3400-\u9fff]/.test(w))return `<ruby>${esc(w)}<rt>${esc(k)}</rt></ruby>`;
+  const re=new RegExp("^"+segs.map(x=>/[\u3400-\u9fff々〆ヶ]/.test(x)?"(.+?)":"("+x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")").join("")+"$");
+  const m=k.match(re);
+  if(!m)return `<ruby>${esc(w)}<rt>${esc(k)}</rt></ruby>`;
+  return segs.map((x,i)=>/[\u3400-\u9fff々〆ヶ]/.test(x)?`<ruby>${esc(x)}<rt>${esc(m[i+1])}</rt></ruby>`:esc(x)).join("");
+}
+const canSpeak="speechSynthesis" in window&&typeof SpeechSynthesisUtterance!=="undefined";
+let JA=null;
+function pickVoice(){try{const vs=speechSynthesis.getVoices()||[];JA=vs.find(v=>/^ja(-|_|$)/i.test(v.lang))||null}catch(e){}}
+if(canSpeak){pickVoice();try{speechSynthesis.addEventListener("voiceschanged",pickVoice)}catch(e){try{speechSynthesis.onvoiceschanged=pickVoice}catch(_){}}}
+function toast(msg){let t=document.getElementById("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),4200)}
+function speak(texts,btn){
+  texts=[].concat(texts).filter(Boolean);
+  if(!canSpeak){toast("이 화면에서는 음성 읽기를 지원하지 않아요. Safari나 Chrome 브라우저로 열어 보세요.");return}
+  try{
+    if(!JA)pickVoice();
+    speechSynthesis.cancel();
+    if(speechSynthesis.paused)speechSynthesis.resume();
+    let started=false;
+    texts.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.85;if(JA)u.voice=JA;
+      u.onstart=()=>{started=true;btn&&btn.classList.add("speaking")};
+      if(i===texts.length-1)u.onend=()=>btn&&btn.classList.remove("speaking");
+      u.onerror=()=>{btn&&btn.classList.remove("speaking")};
+      speechSynthesis.speak(u)});
+    setTimeout(()=>{if(!started&&!speechSynthesis.speaking)toast(JA?"소리가 안 나면 무음 모드와 볼륨을 확인해 주세요.":"이 기기에 일본어 음성이 없는 것 같아요. 휴대폰 설정에서 일본어 음성(TTS)을 추가해 주세요.")},1500);
+  }catch(e){toast("음성 읽기를 시작하지 못했어요. 다른 브라우저로 열어 보세요.")}
+}
+
+const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>';
+function head(c){if(c.s==="p"&&/[\u3400-\u9fff]/.test(c.w))return furi(c.w,c.kana);return esc(c.w)}
+function renderDays(){
+  document.getElementById("days").innerHTML=SEC.map(([k,a,b])=>{const all=C.filter(c=>c.s===k),n=all.filter(c=>known.has(c.id)).length;
+    return `<button type="button" class="day${n===all.length?" done":""}" data-view="${k}" aria-pressed="${view===k}"><b>${a}</b><small>${n}/${all.length}</small></button>`}).join("")+
+    `<button type="button" class="day furi" data-furi aria-pressed="${showFuri}"><b>발음</b><small>${showFuri?"켜짐":"꺼짐"}</small></button>`;
+  document.body.classList.toggle("nofuri",!showFuri);
+  document.getElementById("lead").textContent=NOTE[view];
+}
+function renderGrid(){
+  document.getElementById("grid").innerHTML=C.filter(c=>c.s===view).map((c,i)=>`
+  <article class="item" data-id="${c.id}">
+    <div class="flip${flipped.has(c.id)?" on":""}" role="button" tabindex="0" aria-pressed="${flipped.has(c.id)}" aria-label="${esc(c.w)} 카드 뒤집기">
+      <div class="inner">
+        <div class="face front">
+          <div class="meta"><span>${String(i+1).padStart(2,"0")}</span><span>${SEC.find(x=>x[0]===c.s)[1]}</span></div>
+          <div class="kanji ${c.s==="g"?"g":c.s==="p"?"":"k"}" lang="ja">${head(c)}</div>
+          <div class="fex" lang="ja">${ruby(c.exJ)}</div>
+          ${known.has(c.id)?'<div class="stamp" aria-label="외움">済</div>':""}
+        </div>
+        <div class="face back">
+          <div class="head"><span class="kana" lang="ja">${esc(c.s==="p"?(c.kana||c.w):c.w)}</span></div>
+          <div class="mean">${esc(c.mean)}</div>
+          ${c.extra?`<div class="para">${c.s==="p"?`<span>바꿔 말하면</span><b lang="ja">≈ ${esc(c.extra)}</b>`:`<span>원어</span><b>${esc(c.extra)}</b>`}</div>`:""}
+          <div class="ex"><span class="j" lang="ja">${ruby(c.exJ)}</span><span class="k">${esc(c.exK)}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" data-say="${c.s==="g"?"":esc(c.kana||c.w)}|${esc(plain(c.exJ))}">${icon}듣기</button>
+      <button type="button" class="btn know" data-know="${c.id}" aria-pressed="${known.has(c.id)}">${known.has(c.id)?"외웠어요 ✓":"외웠어요"}</button>
+    </div>
+  </article>`).join("");
+}
+function render(){renderDays();renderGrid()}
+function toggle(f){const id=+f.closest(".item").dataset.id;const on=!flipped.has(id);on?flipped.add(id):flipped.delete(id);f.classList.toggle("on",on);f.setAttribute("aria-pressed",on)}
+document.addEventListener("click",e=>{
+  const fz=e.target.closest("[data-furi]");if(fz){showFuri=!showFuri;store.set("top.furi",showFuri);renderDays();return}
+  const dv=e.target.closest("[data-view]");if(dv){view=dv.dataset.view;store.set("top.v",view);flipped.clear();render();window.scrollTo(0,0);return}
+  const s=e.target.closest("[data-say]");if(s){speak(s.dataset.say.split("|"),s);return}
+  const k=e.target.closest("[data-know]");if(k){const id=+k.dataset.know;known.has(id)?known.delete(id):known.add(id);store.set("top.known",[...known]);render();return}
+  const f=e.target.closest(".flip");if(f)toggle(f);
+});
+document.addEventListener("keydown",e=>{const f=e.target.closest&&e.target.closest(".flip");if(f&&(e.key==="Enter"||e.key===" ")){e.preventDefault();toggle(f)}});
+render();
+</script>
