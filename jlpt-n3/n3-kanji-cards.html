@@ -43,7 +43,10 @@ rt{font-size:.58em;color:var(--muted);font-weight:400}
 .face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:15rem;padding:14px 16px;display:grid;min-width:0}
 .front{grid-template-rows:auto 1fr;justify-items:center;position:relative}
 .meta{justify-self:stretch;display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);letter-spacing:.04em;font-variant-numeric:tabular-nums}
-.kanji{font-family:var(--f-kanji);font-size:clamp(2.6rem,9vw,3.4rem);line-height:1.1;align-self:center;text-align:center;overflow-wrap:anywhere}
+.word{align-self:center;display:grid;gap:10px;justify-items:center;text-align:center;min-width:0}
+.kanji{font-family:var(--f-kanji);font-size:clamp(2.6rem,9vw,3.4rem);line-height:1.1;overflow-wrap:anywhere}
+.yomi{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;align-items:baseline;font-family:var(--f-jp);font-size:1.05rem;color:var(--muted)}
+.yomi .yk{font-family:var(--f-body);font-size:.88rem;color:var(--ai);background:var(--ai-soft);border-radius:6px;padding:1px 8px}
 .stamp{position:absolute;right:12px;bottom:10px;width:34px;height:34px;border:2px solid var(--shu);color:var(--shu);border-radius:50%;display:grid;place-items:center;font-family:var(--f-kanji);font-size:1rem;transform:rotate(-12deg)}
 .back{transform:rotateY(180deg);align-content:start;gap:6px;border-color:var(--ai)}
 .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
@@ -548,7 +551,7 @@ function renderGrid(){
       <div class="inner">
         <div class="face front">
           <div class="meta"><span>${LABEL(c.day)} · ${String(c.no).padStart(2,"0")}</span><span>${esc(c.pos)}</span></div>
-          <div class="kanji" lang="ja">${esc(c.w)}</div>
+          <div class="word"><div class="kanji" lang="ja">${esc(c.w)}</div><div class="yomi"><span lang="ja">${esc(c.kana)}</span><span class="yk">${esc(c.kr)}</span></div></div>
           ${known.has(c.id)?'<div class="stamp" aria-label="외움">済</div>':""}
         </div>
         <div class="face back">
