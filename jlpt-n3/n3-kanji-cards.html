@@ -25,7 +25,7 @@ button{font:inherit;color:inherit}
 rt{font-size:.58em;color:var(--muted);font-weight:400}
 
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
-.days{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:10px;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.days{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:10px;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
 .day{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 2px;cursor:pointer;display:grid;gap:1px;justify-items:center;min-width:0}
 .day b{font-variant-numeric:tabular-nums;font-size:.98rem;letter-spacing:.02em}
 .day small{font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -43,10 +43,12 @@ rt{font-size:.58em;color:var(--muted);font-weight:400}
 .face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:15rem;padding:14px 16px;display:grid;min-width:0}
 .front{grid-template-rows:auto 1fr;justify-items:center;position:relative}
 .meta{justify-self:stretch;display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);letter-spacing:.04em;font-variant-numeric:tabular-nums}
-.word{align-self:center;display:grid;gap:10px;justify-items:center;text-align:center;min-width:0}
-.kanji{font-family:var(--f-kanji);font-size:clamp(2.6rem,9vw,3.4rem);line-height:1.1;overflow-wrap:anywhere}
-.yomi{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;align-items:baseline;font-family:var(--f-jp);font-size:1.05rem;color:var(--muted)}
-.yomi .yk{font-family:var(--f-body);font-size:.88rem;color:var(--ai);background:var(--ai-soft);border-radius:6px;padding:1px 8px}
+.kanji{font-family:var(--f-kanji);font-size:clamp(2.6rem,9vw,3.4rem);line-height:1.1;align-self:center;text-align:center;overflow-wrap:anywhere}
+.kanji rt{font-family:var(--f-jp);font-size:.3em;font-weight:500;letter-spacing:.05em;color:var(--ai)}
+.nofuri rt{visibility:hidden}
+.day.furi,.day.furi[aria-pressed]{background:var(--card);color:var(--ink);border-color:var(--line)}
+.day.furi[aria-pressed="true"] small{color:var(--ai);opacity:1;font-weight:600}
+.day.furi[aria-pressed="false"],.day.furi[aria-pressed="false"] small{color:var(--muted)}
 .stamp{position:absolute;right:12px;bottom:10px;width:34px;height:34px;border:2px solid var(--shu);color:var(--shu);border-radius:50%;display:grid;place-items:center;font-family:var(--f-kanji);font-size:1rem;transform:rotate(-12deg)}
 .back{transform:rotateY(180deg);align-content:start;gap:6px;border-color:var(--ai)}
 .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
@@ -484,6 +486,16 @@ const canSpeak="speechSynthesis" in window;
 function speak(t){if(!canSpeak)return;try{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.9;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("ja"));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const ruby=s=>esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>");
+function furi(w,k){
+  const segs=w.match(/[\u3400-\u9fff々〆ヶ]+|[^\u3400-\u9fff々〆ヶ]+/g)||[w];
+  if(segs.length===1&&/[\u3400-\u9fff]/.test(w))return `<ruby>${esc(w)}<rt>${esc(k)}</rt></ruby>`;
+  const re=new RegExp("^"+segs.map(x=>/[\u3400-\u9fff々〆ヶ]/.test(x)?"(.+?)":"("+x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")").join("")+"$");
+  const m=k.match(re);
+  if(!m)return `<ruby>${esc(w)}<rt>${esc(k)}</rt></ruby>`;
+  return segs.map((x,i)=>/[\u3400-\u9fff々〆ヶ]/.test(x)?`<ruby>${esc(x)}<rt>${esc(m[i+1])}</rt></ruby>`:esc(x)).join("");
+}
+let showFuri=store.get("n3c.furi",true);
+function applyFuri(){document.body.classList.toggle("nofuri",!showFuri)}
 const plain=s=>String(s).replace(/\{([^|}]+)\|[^}]+\}/g,"$1");
 const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>';
 
@@ -537,6 +549,7 @@ function renderDays(){
     const n=C.filter(c=>c.day===di&&known.has(c.id)).length;
     h+=`<button type="button" class="day${n===50?" done":""}" data-view="${di}" aria-pressed="${view===String(di)}"><b>${LABEL(di)}</b><small>${n}/50</small></button>`;
   }
+  h+=`<button type="button" class="day furi" data-furi aria-pressed="${showFuri}"><b>발음</b><small>${showFuri?"켜짐":"꺼짐"}</small></button>`;
   h+=`<button type="button" class="day talk" data-view="talk" aria-pressed="${view==="talk"}"><b>대화</b><small>5장면</small></button>`;
   document.getElementById("days").innerHTML=h;
 }
@@ -551,7 +564,7 @@ function renderGrid(){
       <div class="inner">
         <div class="face front">
           <div class="meta"><span>${LABEL(c.day)} · ${String(c.no).padStart(2,"0")}</span><span>${esc(c.pos)}</span></div>
-          <div class="word"><div class="kanji" lang="ja">${esc(c.w)}</div><div class="yomi"><span lang="ja">${esc(c.kana)}</span><span class="yk">${esc(c.kr)}</span></div></div>
+          <div class="kanji" lang="ja">${furi(c.w,c.kana)}</div>
           ${known.has(c.id)?'<div class="stamp" aria-label="외움">済</div>':""}
         </div>
         <div class="face back">
@@ -589,6 +602,7 @@ function render(){renderDays();renderGrid()}
 function toggle(f){const id=+f.closest(".item").dataset.id;const on=!flipped.has(id);on?flipped.add(id):flipped.delete(id);f.classList.toggle("on",on);f.setAttribute("aria-pressed",on)}
 
 document.addEventListener("click",e=>{
+  const fz=e.target.closest("[data-furi]");if(fz){showFuri=!showFuri;store.set("n3c.furi",showFuri);applyFuri();renderDays();return}
   const dv=e.target.closest("[data-view]");if(dv){view=dv.dataset.view;store.set("n3c.v2",view);flipped.clear();render();window.scrollTo(0,0);return}
   const cb=e.target.closest("[data-copy]");if(cb){const el=document.getElementById(cb.dataset.copy);copyFrom(cb,el.textContent,el);return}
   const s=e.target.closest("[data-say]");if(s){speak(s.dataset.say);return}
@@ -610,5 +624,6 @@ document.getElementById("noteCopy").onclick=e=>{
 if(canSpeak)try{speechSynthesis.getVoices()}catch(e){}
 if(!/^[0-6]$|^talk$/.test(view))view="0";
 renderScenes();
+applyFuri();
 render();
 </script>
