@@ -1,0 +1,313 @@
+<title>N3 한자 카드 50</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: 한 줄 헤더(진도) → 14일 스트립 → 오늘 할 일 → 카드 그리드(카드·버튼·비슷한 말이 한 묶음) */
+:root{
+  --paper:#f2f3f7; --card:#ffffff; --ink:#1c2340; --muted:#5b6482; --line:#d8dbe6;
+  --ai:#2d47a6; --ai-soft:#e5e9f7; --shu:#cf432c; --ok:#2f7a54;
+  --f-kanji:"Klee One","Zen Kaku Gothic New","Hiragino Mincho ProN",serif;
+  --f-jp:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f121c; --card:#181c2b; --ink:#e6e8f2; --muted:#9aa2bf; --line:#2a3046;
+  --ai:#94a6ff; --ai-soft:#1f2642; --shu:#ff7a62; --ok:#6fd19c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f121c; --card:#181c2b; --ink:#e6e8f2; --muted:#9aa2bf; --line:#2a3046;
+  --ai:#94a6ff; --ai-soft:#1f2642; --shu:#ff7a62; --ok:#6fd19c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:24px 56px;display:grid;gap:20px}
+h1,h2,h3{margin:0;text-wrap:balance}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px 24px}
+.brand h1{font-family:var(--f-kanji);font-size:clamp(1.7rem,4vw,2.3rem);letter-spacing:.02em}
+.brand p{margin:4px 0 0;color:var(--muted)}
+.progress{min-width:0;flex:0 1 280px;display:grid;gap:6px}
+.progress .num{font-variant-numeric:tabular-nums;font-weight:600}
+.progress .num small{color:var(--muted);font-weight:400}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .4s}
+
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 4px;cursor:pointer;display:grid;gap:2px;justify-items:center;text-align:center;min-width:0}
+.day b{font-variant-numeric:tabular-nums;font-size:.95rem}
+.day span{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.day.rev{background:var(--ai-soft)}
+.day[aria-pressed="true"]{border-color:var(--ai);box-shadow:inset 0 0 0 1px var(--ai)}
+.day.done b::after{content:"済";font-family:var(--f-kanji);color:var(--shu);font-size:.7rem;margin-left:3px;vertical-align:top}
+
+.today{display:grid;gap:10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:14px}
+.today-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.today h2{font-size:1.15rem}
+.today ol{margin:0;padding-left:1.2em;color:var(--muted)}
+.prompt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.prompt code{flex:1 1 320px;min-width:0;font-family:var(--f-jp);font-size:.9rem;background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;user-select:all;overflow-wrap:anywhere}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.88rem}
+.btn:hover{border-color:var(--ai)}
+.btn.primary{background:var(--ai);border-color:var(--ai);color:var(--card)}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters .btn[aria-pressed="true"]{border-color:var(--ai);color:var(--ai);font-weight:600}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px 16px}
+.item{display:grid;gap:8px;align-content:start;min-width:0}
+.flip{perspective:1100px;cursor:pointer;border-radius:14px}
+.inner{display:grid;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.2,1)}
+.flip.on .inner{transform:rotateY(180deg)}
+.face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:12.5rem;padding:14px 16px;display:grid;min-width:0}
+.front{grid-template-rows:auto 1fr auto;justify-items:center;position:relative}
+.meta{justify-self:stretch;display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);letter-spacing:.04em}
+.kanji{font-family:var(--f-kanji);font-size:clamp(2.6rem,9vw,3.4rem);line-height:1.1;align-self:center;text-align:center;overflow-wrap:anywhere}
+.hint{font-size:.75rem;color:var(--muted)}
+.stamp{position:absolute;right:12px;bottom:10px;width:34px;height:34px;border:2px solid var(--shu);color:var(--shu);border-radius:50%;display:grid;place-items:center;font-family:var(--f-kanji);font-size:1rem;transform:rotate(-12deg)}
+.back{transform:rotateY(180deg);align-content:start;gap:6px}
+.kana{font-family:var(--f-jp);font-size:1.5rem;font-weight:700;line-height:1.2}
+.kr{display:inline-block;background:var(--ai-soft);color:var(--ai);border-radius:6px;padding:1px 8px;font-weight:600;font-size:.9rem;justify-self:start}
+.mean{font-size:1.15rem;font-weight:600}
+.mean small{color:var(--muted);font-weight:400;font-size:.78rem;margin-left:6px}
+.ex{border-top:1px solid var(--line);padding-top:8px;margin-top:2px;display:grid;gap:2px}
+.ex .j{font-family:var(--f-jp);font-size:.95rem}
+.ex .k{color:var(--muted);font-size:.85rem}
+
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.actions .btn{padding:4px 10px;font-size:.8rem;display:inline-flex;gap:5px;align-items:center}
+.actions svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
+.know[aria-pressed="true"]{border-color:var(--ok);color:var(--ok);font-weight:600}
+
+.rel{display:grid;gap:4px}
+.rel h3{font-size:.72rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.rel ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.rel button{width:100%;text-align:left;border:0;border-left:2px solid var(--line);background:transparent;padding:3px 0 3px 10px;cursor:pointer;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;border-radius:0}
+.rel button:hover{border-left-color:var(--ai)}
+.rel .w{font-family:var(--f-jp);font-weight:700}
+.rel .r{font-family:var(--f-jp);color:var(--muted);font-size:.82rem}
+.rel .m{font-size:.85rem}
+.rel .m em{font-style:normal;color:var(--ai);font-size:.78rem;margin-right:4px}
+
+.empty{color:var(--muted);padding:24px 0}
+footer{color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:4px}
+footer p{margin:0;max-width:70ch}
+
+@media (max-width:520px){.days{grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.day span{display:none}}
+@media (prefers-reduced-motion:reduce){.inner,.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>N3 한자 카드 50</h1>
+      <p>2주 완성 · 하루 5장 · 카드를 누르면 뒤집혀요</p>
+    </div>
+    <div class="progress" aria-live="polite">
+      <div class="num" id="pnum">0 <small>/ 50 외움</small></div>
+      <div class="bar"><i id="pbar"></i></div>
+    </div>
+  </header>
+
+  <nav class="days" id="days" aria-label="14일 일정"></nav>
+
+  <section class="today" id="today"></section>
+
+  <div class="tools">
+    <div class="filters" id="filters">
+      <button class="btn" data-view="all" type="button">전체 50장</button>
+      <button class="btn" data-view="again" type="button">아직 못 외운 카드</button>
+    </div>
+    <button class="btn" id="shuffle" type="button">섞기</button>
+    <button class="btn" id="reset" type="button">모두 앞면으로</button>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>
+    <p>한글 발음의 "-"는 앞 소리를 길게 늘이라는 뜻이에요. 예: 요-이 = よーい</p>
+    <p>"외웠어요" 표시는 이 기기의 브라우저에만 저장돼요. 다른 폰이나 PC에서는 처음부터 시작합니다.</p>
+    <p>이 50장은 N3에 자주 나오는 한자 단어로 시작하는 출발점이에요. 시험 범위 전체(한자 약 600자 이상)를 대신하지는 않아요.</p>
+  </footer>
+</div>
+
+<script>
+const C = [
+ // [단어, 읽기, 한글발음, 뜻, 품사, 예문, 예문뜻, [[비슷한말, 읽기, 한글, 뜻], ...]]
+ ["経験","けいけん","케이켄","경험","명사·する","日本で働いた経験があります。","일본에서 일한 경험이 있어요.",[["体験","たいけん","타이켄","체험"],["試験","しけん","시켄","시험"],["経済","けいざい","케이자이","경제"]]],
+ ["予定","よてい","요테이","예정, 계획","명사","週末の予定はありますか。","주말에 계획 있어요?",[["予約","よやく","요야쿠","예약"],["予報","よほう","요호-","예보"],["計画","けいかく","케이카쿠","계획"]]],
+ ["準備","じゅんび","쥰비","준비","명사·する","旅行の準備をしています。","여행 준비를 하고 있어요.",[["用意","ようい","요-이","준비, 채비"],["支度","したく","시타쿠","채비, 몸단장"],["片付ける","かたづける","카타즈케루","정리하다"]]],
+ ["最近","さいきん","사이킨","최근, 요즘","명사·부사","最近、忙しいです。","요즘 바빠요.",[["最初","さいしょ","사이쇼","처음"],["最後","さいご","사이고","마지막"],["この頃","このごろ","코노고로","요즘"]]],
+ ["必要","ひつよう","히츠요-","필요","な형용사","パスポートが必要です。","여권이 필요해요.",[["必ず","かならず","카나라즈","반드시"],["大切","たいせつ","타이세츠","소중함"],["重要","じゅうよう","쥬-요-","중요"]]],
+
+ ["決める","きめる","키메루","정하다","동사","行く日を決めましょう。","갈 날을 정해요.",[["決まる","きまる","키마루","정해지다"],["選ぶ","えらぶ","에라부","고르다"],["決定","けってい","켓테이","결정"]]],
+ ["続ける","つづける","츠즈케루","계속하다","동사","日本語の勉強を続けています。","일본어 공부를 계속하고 있어요.",[["続く","つづく","츠즈쿠","계속되다"],["止める","やめる","야메루","그만두다"],["途中","とちゅう","토츄-","도중"]]],
+ ["届く","とどく","토도쿠","닿다, 도착하다","동사","昨日、荷物が届きました。","어제 짐이 도착했어요.",[["届ける","とどける","토도케루","갖다주다, 전하다"],["送る","おくる","오쿠루","보내다"],["着く","つく","츠쿠","도착하다"]]],
+ ["集める","あつめる","아츠메루","모으다","동사","切手を集めています。","우표를 모으고 있어요.",[["集まる","あつまる","아츠마루","모이다"],["集合","しゅうごう","슈-고-","집합"],["拾う","ひろう","히로우","줍다"]]],
+ ["比べる","くらべる","쿠라베루","비교하다","동사","去年と比べて、今年は暑いです。","작년에 비해 올해는 더워요.",[["比較","ひかく","히카쿠","비교"],["違う","ちがう","치가우","다르다"],["同じ","おなじ","오나지","같음"]]],
+
+ ["気持ち","きもち","키모치","기분, 마음","명사","気持ちがいい朝ですね。","기분 좋은 아침이네요.",[["気分","きぶん","키분","기분"],["心","こころ","코코로","마음"],["感じる","かんじる","칸지루","느끼다"]]],
+ ["心配","しんぱい","신파이","걱정","명사·する","母が心配しています。","엄마가 걱정하고 있어요.",[["安心","あんしん","안신","안심"],["不安","ふあん","후안","불안"],["気にする","きにする","키니스루","신경 쓰다"]]],
+ ["喜ぶ","よろこぶ","요로코부","기뻐하다","동사","子どもがプレゼントを喜びました。","아이가 선물을 받고 기뻐했어요.",[["嬉しい","うれしい","우레시-","기쁘다"],["楽しい","たのしい","타노시-","즐겁다"],["笑う","わらう","와라우","웃다"]]],
+ ["驚く","おどろく","오도로쿠","놀라다","동사","そのニュースに驚きました。","그 뉴스에 놀랐어요.",[["びっくりする","びっくりする","빗쿠리스루","깜짝 놀라다"],["怖い","こわい","코와이","무섭다"],["不思議","ふしぎ","후시기","신기함, 이상함"]]],
+ ["怒る","おこる","오코루","화내다","동사","弟がいたずらをして、母が怒った。","남동생이 장난을 쳐서 엄마가 화냈다.",[["叱る","しかる","시카루","꾸짖다"],["腹が立つ","はらがたつ","하라가타츠","화가 나다"],["文句","もんく","몬쿠","불평"]]],
+
+ ["家族","かぞく","카조쿠","가족","명사","家族と晩ご飯を食べます。","가족과 저녁을 먹어요.",[["両親","りょうしん","료-신","부모님"],["兄弟","きょうだい","쿄-다이","형제자매"],["親戚","しんせき","신세키","친척"]]],
+ ["主婦","しゅふ","슈후","주부","명사","母は主婦です。","엄마는 주부예요.",[["家事","かじ","카지","집안일"],["主人","しゅじん","슈진","남편, 주인"],["夫婦","ふうふ","후-후","부부"]]],
+ ["近所","きんじょ","킨죠","근처, 이웃","명사","近所のスーパーで買い物をした。","근처 슈퍼에서 장을 봤다.",[["隣","となり","토나리","옆, 옆집"],["周り","まわり","마와리","주변"],["町","まち","마치","동네"]]],
+ ["相手","あいて","아이테","상대","명사","話す相手がいません。","이야기할 상대가 없어요.",[["相談","そうだん","소-단","상담, 의논"],["友人","ゆうじん","유-진","친구"],["仲間","なかま","나카마","동료, 한패"]]],
+ ["世話","せわ","세와","돌봄, 신세","명사·する","いつもお世話になっています。","늘 신세 지고 있어요.",[["面倒","めんどう","멘도-","귀찮음, 돌봄"],["手伝う","てつだう","테츠다우","돕다"],["育てる","そだてる","소다테루","키우다"]]],
+
+ ["説明","せつめい","세츠메이","설명","명사·する","先生がもう一度説明してくれた。","선생님이 한 번 더 설명해 줬다.",[["案内","あんない","안나이","안내"],["意味","いみ","이미","의미"],["答える","こたえる","코타에루","대답하다"]]],
+ ["練習","れんしゅう","렌슈-","연습","명사·する","毎日、発音を練習します。","매일 발음을 연습해요.",[["復習","ふくしゅう","후쿠슈-","복습"],["予習","よしゅう","요슈-","예습"],["習う","ならう","나라우","배우다"]]],
+ ["合格","ごうかく","고-카쿠","합격","명사·する","N3に合格したいです。","N3에 합격하고 싶어요.",[["落ちる","おちる","오치루","떨어지다"],["受ける","うける","우케루","(시험을) 보다"],["結果","けっか","켓카","결과"]]],
+ ["仕事","しごと","시고토","일, 직업","명사","父は仕事で帰りが遅い。","아빠는 일 때문에 늦게 들어온다.",[["会社","かいしゃ","카이샤","회사"],["働く","はたらく","하타라쿠","일하다"],["休み","やすみ","야스미","쉬는 날"]]],
+ ["会議","かいぎ","카이기","회의","명사","三時から会議があります。","3시부터 회의가 있어요.",[["会話","かいわ","카이와","회화, 대화"],["意見","いけん","이켄","의견"],["参加","さんか","산카","참가"]]],
+
+ ["場所","ばしょ","바쇼","장소","명사","待ち合わせの場所はどこですか。","만나기로 한 장소가 어디예요?",[["所","ところ","토코로","곳"],["場合","ばあい","바아이","경우"],["位置","いち","이치","위치"]]],
+ ["交通","こうつう","코-츠-","교통","명사","この町は交通が便利です。","이 동네는 교통이 편해요.",[["交差点","こうさてん","코-사텐","교차로"],["信号","しんごう","신고-","신호등"],["事故","じこ","지코","사고"]]],
+ ["乗り換える","のりかえる","노리카에루","갈아타다","동사","次の駅で乗り換えてください。","다음 역에서 갈아타세요.",[["乗る","のる","노루","타다"],["降りる","おりる","오리루","내리다"],["遅れる","おくれる","오쿠레루","늦다"]]],
+ ["戻る","もどる","모도루","돌아오다","동사","すぐ戻ります。","금방 돌아올게요.",[["帰る","かえる","카에루","돌아가다"],["返す","かえす","카에스","돌려주다"],["戻す","もどす","모도스","되돌리다"]]],
+ ["通う","かよう","카요우","다니다","동사","毎日バスで学校に通っています。","매일 버스로 학교에 다녀요.",[["通る","とおる","토-루","지나가다"],["通勤","つうきん","츠-킨","출퇴근"],["通学","つうがく","츠-가쿠","통학"]]],
+
+ ["便利","べんり","벤리","편리함","な형용사","スマホはとても便利です。","스마트폰은 정말 편리해요.",[["不便","ふべん","후벤","불편함"],["簡単","かんたん","칸탄","간단함"],["役に立つ","やくにたつ","야쿠니타츠","도움이 되다"]]],
+ ["複雑","ふくざつ","후쿠자츠","복잡함","な형용사","この問題は複雑だ。","이 문제는 복잡하다.",[["単純","たんじゅん","탄쥰","단순함"],["難しい","むずかしい","무즈카시-","어렵다"],["混乱","こんらん","콘란","혼란"]]],
+ ["丁寧","ていねい","테이네이","정중함, 꼼꼼함","な형용사","丁寧に書いてください。","정성껏 써 주세요.",[["親切","しんせつ","신세츠","친절함"],["失礼","しつれい","시츠레이","실례"],["敬語","けいご","케이고","존댓말"]]],
+ ["正しい","ただしい","타다시-","올바르다","い형용사","正しい答えを選んでください。","올바른 답을 고르세요.",[["間違える","まちがえる","마치가에루","틀리다"],["正確","せいかく","세이카쿠","정확함"],["確か","たしか","타시카","확실함, 아마"]]],
+ ["細かい","こまかい","코마카이","잘다, 세세하다","い형용사","細かいお金がありますか。","잔돈 있어요?",[["小さい","ちいさい","치-사이","작다"],["詳しい","くわしい","쿠와시-","자세하다"],["細い","ほそい","호소이","가늘다"]]],
+
+ ["掃除","そうじ","소-지","청소","명사·する","日曜日に部屋を掃除します。","일요일에 방을 청소해요.",[["洗濯","せんたく","센타쿠","빨래"],["片付ける","かたづける","카타즈케루","정리하다"],["汚い","きたない","키타나이","더럽다"]]],
+ ["料理","りょうり","료-리","요리","명사·する","母の料理はおいしい。","엄마 요리는 맛있다.",[["材料","ざいりょう","자이료-","재료"],["焼く","やく","야쿠","굽다"],["味","あじ","아지","맛"]]],
+ ["生活","せいかつ","세이카츠","생활","명사·する","日本の生活に慣れましたか。","일본 생활에 익숙해졌어요?",[["暮らす","くらす","쿠라스","살다, 지내다"],["慣れる","なれる","나레루","익숙해지다"],["習慣","しゅうかん","슈-칸","습관"]]],
+ ["値段","ねだん","네단","가격","명사","この服の値段はいくらですか。","이 옷 가격은 얼마예요?",[["料金","りょうきん","료-킨","요금"],["安い","やすい","야스이","싸다"],["払う","はらう","하라우","지불하다"]]],
+ ["忘れる","わすれる","와스레루","잊다, 두고 오다","동사","傘を電車に忘れた。","우산을 전철에 두고 내렸다.",[["覚える","おぼえる","오보에루","외우다"],["思い出す","おもいだす","오모이다스","떠올리다"],["落とす","おとす","오토스","떨어뜨리다, 잃어버리다"]]],
+
+ ["天気","てんき","텐키","날씨","명사","明日の天気は雨らしい。","내일은 비가 온대.",[["天気予報","てんきよほう","텐키요호-","일기예보"],["晴れる","はれる","하레루","맑아지다"],["曇る","くもる","쿠모루","흐려지다"]]],
+ ["季節","きせつ","키세츠","계절","명사","一番好きな季節は秋です。","제일 좋아하는 계절은 가을이에요.",[["春","はる","하루","봄"],["涼しい","すずしい","스즈시-","선선하다"],["暖かい","あたたかい","아타타카이","따뜻하다"]]],
+ ["具合","ぐあい","구아이","(몸) 상태","명사","体の具合はどうですか。","몸 상태는 어때요?",[["調子","ちょうし","쵸-시","컨디션"],["病気","びょうき","뵤-키","병"],["熱","ねつ","네츠","열"]]],
+ ["痛い","いたい","이타이","아프다","い형용사","頭が痛いです。","머리가 아파요.",[["怪我","けが","케가","부상, 다침"],["薬","くすり","쿠스리","약"],["治る","なおる","나오루","낫다"]]],
+ ["疲れる","つかれる","츠카레루","피곤하다, 지치다","동사","今日はとても疲れた。","오늘은 정말 피곤했다.",[["休む","やすむ","야스무","쉬다"],["眠い","ねむい","네무이","졸리다"],["元気","げんき","겐키","기운, 건강"]]],
+
+ ["理由","りゆう","리유-","이유","명사","遅れた理由を教えてください。","늦은 이유를 알려 주세요.",[["原因","げんいん","겐인","원인"],["目的","もくてき","모쿠테키","목적"],["訳","わけ","와케","이유, 사정"]]],
+ ["関係","かんけい","칸케이","관계","명사","それは私には関係ない。","그건 나랑 상관없어.",[["関心","かんしん","칸신","관심"],["関する","かんする","칸스루","~에 관하다"],["影響","えいきょう","에이쿄-","영향"]]],
+ ["変化","へんか","헨카","변화","명사·する","町の様子が大きく変化した。","동네 모습이 크게 변했다.",[["変わる","かわる","카와루","바뀌다"],["変える","かえる","카에루","바꾸다"],["変","へん","헨","이상함"]]],
+ ["自由","じゆう","지유-","자유","명사·な형용사","週末は自由な時間が多い。","주말에는 자유 시간이 많다.",[["自分","じぶん","지분","자기 자신"],["自然","しぜん","시젠","자연"],["勝手","かって","캇테","제멋대로"]]],
+ ["約束","やくそく","야쿠소쿠","약속","명사·する","友達と会う約束をした。","친구와 만날 약속을 했다.",[["守る","まもる","마모루","지키다"],["破る","やぶる","야부루","어기다, 찢다"],["待ち合わせ","まちあわせ","마치아와세","만나기로 한 약속"]]]
+].map((c,i)=>({id:i+1,day:Math.floor(i/5)+1,w:c[0],kana:c[1],kr:c[2],mean:c[3],pos:c[4],exJ:c[5],exK:c[6],rel:c[7]}));
+
+const THEMES=["생활·시간","기본 동사","마음·감정","가족·사람","학교·일","장소·이동","상태 표현","집안 생활","날씨·몸","생각·관계"];
+const DAYS=THEMES.map((t,i)=>({d:i+1,label:t,rev:false}))
+ .concat([{d:11,label:"복습 1~5일",rev:true},{d:12,label:"복습 6~10일",rev:true},{d:13,label:"못 외운 것",rev:true},{d:14,label:"전체 섞기",rev:true}]);
+
+const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let known=new Set(store.get("n3c.known",[]));
+let view=store.get("n3c.view","d1");
+let order=C.map(c=>c.id);
+const flipped=new Set();
+const canSpeak="speechSynthesis" in window;
+
+function speak(t){if(!canSpeak)return;try{const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";u.rate=.9;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("ja"));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>';
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function cardsFor(v){
+  const by=id=>C[id-1];
+  const list=order.map(by);
+  if(v==="all")return list;
+  if(v==="again"||v==="d13")return list.filter(c=>!known.has(c.id));
+  const n=+v.slice(1);
+  if(n<=10)return list.filter(c=>c.day===n);
+  if(n===11)return list.filter(c=>c.day<=5);
+  if(n===12)return list.filter(c=>c.day>5);
+  return list;
+}
+
+function renderDays(){
+  document.getElementById("days").innerHTML=DAYS.map(d=>{
+    const done=d.d<=10&&C.filter(c=>c.day===d.d).every(c=>known.has(c.id));
+    return `<button type="button" class="day${d.rev?" rev":""}${done?" done":""}" data-view="d${d.d}" aria-pressed="${view==="d"+d.d}"><b>D${d.d}</b><span>${d.label}</span></button>`}).join("");
+  document.querySelectorAll("#filters .btn").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===view));
+}
+
+function renderToday(){
+  const el=document.getElementById("today");
+  let title,steps,words=null;
+  if(view==="all"){title="전체 50장";steps=["앞면만 보고 읽기와 뜻을 말해 보세요.","모르는 카드는 \"외웠어요\"를 누르지 말고 그대로 두세요."]}
+  else if(view==="again"){title="아직 못 외운 카드 "+cardsFor("again").length+"장";steps=["여기 남은 카드가 0장이 될 때까지 반복하세요."]}
+  else{
+    const d=DAYS[+view.slice(1)-1];
+    title=`${d.d}일차 · ${d.label}`;
+    if(d.d<=10){
+      words=C.filter(c=>c.day===d.d);
+      steps=["앞면을 보고 읽기와 뜻을 떠올린 뒤 카드를 눌러 확인하세요.","\"예문 듣기\"를 누르고 예문을 소리 내어 3번 따라 읽으세요.","아래 프롬프트를 복사해서 Claude 음성 대화로 오늘 단어를 써 보세요 (10분).","자기 전에 다시 한 번 보고, 확실한 카드만 \"외웠어요\"를 누르세요."];
+    }else if(d.d===13){steps=["\"외웠어요\"를 아직 안 누른 카드만 모았어요.","이 날은 새 단어 없이 여기만 끝내면 됩니다."]}
+    else if(d.d===14){steps=["50장을 섞었어요. 앞면만 보고 전부 말할 수 있는지 마지막으로 점검하세요.","막힌 카드는 \"외웠어요\"를 풀고 다시 보세요."]}
+    else{steps=["앞면만 보고 읽기·뜻·예문까지 말해 보세요.","\"비슷한 말\"까지 읽고 뜻을 말할 수 있으면 통과예요."]}
+  }
+  const prompt=words?`今日の単語は「${words.map(c=>c.w).join("・")}」です。この単語を使って、N3レベルの短い会話をしてください。私が間違えたら、会話の最後に直してください。`:"";
+  el.innerHTML=`<div class="today-head"><h2>${esc(title)}</h2><span class="hint">${cardsFor(view).length}장</span></div>
+    <ol>${steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+    ${words?`<div class="prompt"><code id="ptext">${esc(prompt)}</code><button type="button" class="btn primary" id="copy">Claude 프롬프트 복사</button></div>`:""}`;
+  const cp=document.getElementById("copy");
+  if(cp)cp.onclick=()=>{
+    const done=()=>{cp.textContent="복사했어요";setTimeout(()=>cp.textContent="Claude 프롬프트 복사",1600)};
+    const sel=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("ptext"));const s=getSelection();s.removeAllRanges();s.addRange(r);cp.textContent="선택됨, 길게 눌러 복사하세요"};
+    try{navigator.clipboard.writeText(prompt).then(done,sel)}catch(e){sel()}
+  };
+}
+
+function renderGrid(){
+  const list=cardsFor(view),g=document.getElementById("grid");
+  if(!list.length){g.innerHTML=`<p class="empty">남은 카드가 없어요. 전부 외웠습니다.</p>`;return}
+  g.innerHTML=list.map(c=>`
+  <article class="item" data-id="${c.id}">
+    <div class="flip${flipped.has(c.id)?" on":""}" role="button" tabindex="0" aria-pressed="${flipped.has(c.id)}" aria-label="${esc(c.w)} 카드 뒤집기">
+      <div class="inner">
+        <div class="face front">
+          <div class="meta"><span>D${c.day} · ${String(c.id).padStart(2,"0")}</span><span>${esc(c.pos)}</span></div>
+          <div class="kanji" lang="ja">${esc(c.w)}</div>
+          <div class="hint">눌러서 뒤집기</div>
+          ${known.has(c.id)?'<div class="stamp" aria-label="외움">済</div>':""}
+        </div>
+        <div class="face back">
+          <div class="kana" lang="ja">${esc(c.kana)}</div>
+          <span class="kr">${esc(c.kr)}</span>
+          <div class="mean">${esc(c.mean)}<small>${esc(c.pos)}</small></div>
+          <div class="ex"><span class="j" lang="ja">${esc(c.exJ)}</span><span class="k">${esc(c.exK)}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      ${canSpeak?`<button type="button" class="btn" data-say="${esc(c.kana)}">${icon}단어 듣기</button><button type="button" class="btn" data-say="${esc(c.exJ)}">${icon}예문 듣기</button>`:""}
+      <button type="button" class="btn know" data-know="${c.id}" aria-pressed="${known.has(c.id)}">${known.has(c.id)?"외웠어요 ✓":"외웠어요"}</button>
+    </div>
+    <div class="rel">
+      <h3>비슷한 말</h3>
+      <ul>${c.rel.map(r=>`<li><button type="button" data-say="${esc(r[1])}" lang="ja"><span class="w">${esc(r[0])}</span><span class="r">${r[0]===r[1]?"":esc(r[1])+" · "}${esc(r[2])}</span><span class="m" lang="ko">${esc(r[3])}</span></button></li>`).join("")}</ul>
+    </div>
+  </article>`).join("");
+}
+
+function renderProgress(){
+  document.getElementById("pnum").innerHTML=`${known.size} <small>/ 50 외움</small>`;
+  document.getElementById("pbar").style.width=(known.size/50*100)+"%";
+}
+function render(){renderDays();renderToday();renderGrid();renderProgress()}
+
+function setView(v){view=v;store.set("n3c.view",v);if(v==="d14")shuffle(order);else order=C.map(c=>c.id);flipped.clear();render();}
+document.addEventListener("click",e=>{
+  const dv=e.target.closest("[data-view]");if(dv){setView(dv.dataset.view);return}
+  const s=e.target.closest("[data-say]");if(s){speak(s.dataset.say);return}
+  const k=e.target.closest("[data-know]");if(k){const id=+k.dataset.know;known.has(id)?known.delete(id):known.add(id);store.set("n3c.known",[...known]);render();return}
+  const f=e.target.closest(".flip");if(f)toggle(f);
+});
+document.addEventListener("keydown",e=>{const f=e.target.closest&&e.target.closest(".flip");if(f&&(e.key==="Enter"||e.key===" ")){e.preventDefault();toggle(f)}});
+function toggle(f){const id=+f.closest(".item").dataset.id;const on=!flipped.has(id);on?flipped.add(id):flipped.delete(id);f.classList.toggle("on",on);f.setAttribute("aria-pressed",on)}
+document.getElementById("shuffle").onclick=()=>{shuffle(order);renderGrid()};
+document.getElementById("reset").onclick=()=>{flipped.clear();document.querySelectorAll(".flip.on").forEach(f=>{f.classList.remove("on");f.setAttribute("aria-pressed","false")})};
+if(canSpeak)try{speechSynthesis.getVoices()}catch(e){}
+if(!DAYS.some(d=>"d"+d.d===view)&&view!=="all"&&view!=="again")view="d1";
+if(view==="d14")shuffle(order);
+render();
+</script>
