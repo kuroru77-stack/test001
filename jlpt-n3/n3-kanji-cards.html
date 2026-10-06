@@ -108,6 +108,17 @@ rt{font-size:.58em;color:var(--muted);font-weight:400}
 #toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);max-width:calc(100% - 32px);background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;font-size:.86rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .speaking{border-color:var(--ai)!important;color:var(--ai)!important}
+.logbtn{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.logbtn:hover{border-color:var(--ai)}
+#logp{position:fixed;inset:0;z-index:30;background:rgba(10,12,20,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+#logp[hidden]{display:none!important}
+#logp .sheet{background:var(--card);color:var(--ink);border-radius:16px;width:100%;max-width:520px;max-height:80vh;overflow:auto;padding:16px;display:grid;gap:12px}
+#logp .sh-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#logp h2{margin:0;font-size:1.05rem}
+#logp pre{margin:0;white-space:pre-wrap;font-family:var(--f-body);font-size:.9rem;line-height:1.7;background:var(--paper);border-radius:10px;padding:12px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#logp .sh-act{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+#logp .btn.primary{background:var(--ai);border-color:var(--ai);color:var(--card);padding:6px 14px}
+.wrap{padding-bottom:88px}
 </style>
 
 <h1 class="sr">N3 한자 카드</h1>
@@ -623,13 +634,13 @@ function copyFrom(btn,text,codeEl){
   try{navigator.clipboard.writeText(text).then(ok,sel)}catch(e){sel()}
 }
 function render(){renderDays();renderGrid()}
-function toggle(f){const id=+f.closest(".item").dataset.id;const on=!flipped.has(id);on?flipped.add(id):flipped.delete(id);f.classList.toggle("on",on);f.setAttribute("aria-pressed",on)}
+function toggle(f){const id=+f.closest(".item").dataset.id;const on=!flipped.has(id);on?flipped.add(id):flipped.delete(id);if(on)logHit(id,"f");f.classList.toggle("on",on);f.setAttribute("aria-pressed",on)}
 
 document.addEventListener("click",e=>{
   const fz=e.target.closest("[data-furi]");if(fz){showFuri=!showFuri;store.set("n3c.furi",showFuri);applyFuri();renderDays();return}
   const dv=e.target.closest("[data-view]");if(dv){view=dv.dataset.view;store.set("n3c.v2",view);flipped.clear();render();window.scrollTo(0,0);return}
   const cb=e.target.closest("[data-copy]");if(cb){const el=document.getElementById(cb.dataset.copy);copyFrom(cb,el.textContent,el);return}
-  const s=e.target.closest("[data-say]");if(s){speak(s.dataset.say.split("|"),s);return}
+  const s=e.target.closest("[data-say]");if(s){const it=s.closest(".item");logHit(it?+it.dataset.id:0,"l");speak(s.dataset.say.split("|"),s);return}
   const k=e.target.closest("[data-know]");if(k){const id=+k.dataset.know;known.has(id)?known.delete(id):known.add(id);store.set("n3c.known",[...known]);render();return}
   const f=e.target.closest(".flip");if(f)toggle(f);
 });
@@ -648,5 +659,47 @@ document.getElementById("noteCopy").onclick=e=>{
 if(!/^[0-6]$|^talk$/.test(view))view="0";
 renderScenes();
 applyFuri();
+const LOGK="n3c.log";
+let LOG=store.get(LOGK,null);if(!LOG||typeof LOG!=="object"||!LOG.c||!LOG.d)LOG={c:{},d:{}};
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function logHit(id,kind){
+  const t=ymd(new Date()),day=LOG.d[t]||(LOG.d[t]={f:0,l:0,ids:[]});
+  day[kind]=(day[kind]||0)+1;
+  if(id){const c=LOG.c[id]||(LOG.c[id]={f:0,l:0});c[kind]=(c[kind]||0)+1;if(!day.ids.includes(id))day.ids.push(id)}
+  store.set(LOGK,LOG);
+}
+function streak(){let n=0;const d=new Date();if(!LOG.d[ymd(d)])d.setDate(d.getDate()-1);while(LOG.d[ymd(d)]){n++;d.setDate(d.getDate()-1)}return n}
+function summary(){
+  const t=ymd(new Date()),td=LOG.d[t]||{f:0,l:0,ids:[]},days=Object.keys(LOG.d).sort();
+  let F=0,L=0;days.forEach(k=>{F+=LOG.d[k].f||0;L+=LOG.d[k].l||0});
+  const seen=Object.keys(LOG.c).filter(id=>(LOG.c[id].f||0)>0).length,total=C.length;
+  const lines=[`[${"N3 한자 카드"} 학습 기록] ${t.slice(5).replace("-","/")} 기준`,
+    `공부한 날 ${days.length}일 · 연속 ${streak()}일`,
+    `오늘: 카드 뒤집기 ${td.f||0}회 (${td.ids.length}장) · 듣기 ${td.l||0}회`,
+    `누적: 카드 뒤집기 ${F}회 · 듣기 ${L}회`,
+    `뒤집어 본 카드 ${seen}/${total}장 · 외운 카드 ${known.size}/${total}장`];
+  const g="D별 외운 카드: "+[0,1,2,3,4,5,6].map(d=>LABEL(d)+" "+C.filter(c=>c.day===d&&known.has(c.id)).length+"/50").join(" · ");if(g)lines.push(g);
+  const recent=days.slice(-7);
+  if(recent.length){lines.push("","최근 날짜별");recent.forEach(k=>{const v=LOG.d[k];lines.push(`${k.slice(5).replace("-","/")}  뒤집기 ${v.f||0} · 듣기 ${v.l||0} · ${v.ids.length}장`)})}
+  const top=Object.keys(LOG.c).map(id=>({id:+id,n:(LOG.c[id].f||0)+(LOG.c[id].l||0),f:LOG.c[id].f||0,l:LOG.c[id].l||0})).filter(x=>C[x.id-1]).sort((a,b)=>b.n-a.n).slice(0,5);
+  if(top.length){lines.push("","많이 본 카드 (뒤집기·듣기)");top.forEach(x=>lines.push(`${C[x.id-1].w}  ${x.f}·${x.l}`))}
+  return lines.join("\n");
+}
+function openLog(){
+  let p=document.getElementById("logp");
+  if(!p){p=document.createElement("div");p.id="logp";p.setAttribute("role","dialog");p.setAttribute("aria-modal","true");p.setAttribute("aria-label","내 학습 기록");
+    p.innerHTML=`<div class="sheet"><div class="sh-head"><h2>내 학습 기록</h2><button type="button" class="btn" data-logclose>닫기</button></div><pre id="logtxt"></pre><div class="sh-act"><button type="button" class="btn primary" id="logcopy">기록 복사</button><span class="hint">이 폰의 브라우저에만 저장돼요.</span></div></div>`;
+    document.body.appendChild(p);
+    p.addEventListener("click",e=>{if(e.target===p||e.target.closest("[data-logclose]"))p.hidden=true});
+    document.getElementById("logcopy").onclick=e=>{const b=e.currentTarget,el=document.getElementById("logtxt"),lab="기록 복사";
+      const ok=()=>{b.textContent="복사했어요";setTimeout(()=>b.textContent=lab,1600)};
+      const sel=()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent="선택됨, 길게 눌러 복사하세요"};
+      try{navigator.clipboard.writeText(el.textContent).then(ok,sel)}catch(_){sel()}};
+  }
+  document.getElementById("logtxt").textContent=summary();p.hidden=false;
+}
+(function(){const b=document.createElement("button");b.type="button";b.className="logbtn";b.textContent="내 기록";b.onclick=openLog;document.body.appendChild(b)})();
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){const p=document.getElementById("logp");if(p)p.hidden=true}});
+
 render();
 </script>
